@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    Int                   @id @default(autoincrement())
+  first_name            String
+  last_name             String?
+  email                 String                @unique
+  phone                 String?
+  role                  Role                  @default(User)
+  home_gym              String?
+  weight                String?
+  favourite_quote       String?
+  disciplinesCategories DisciplinesCategory[]
+}
+
+model DisciplinesCategory {
+  userId       Int
+  user         User       @relation(fields: [userId], references: [id])
+  disciplineId Int
+  discipline   Discipline @relation(fields: [disciplineId], references: [id])
+
+  @@id([userId, disciplineId])
+}
+
+model Discipline {
+  id                  Int                   @id @default(autoincrement())
+  name                String
+  DisciplinesCategory DisciplinesCategory[]
+}
+
+enum Role {
+  User
+  Admin
+}
