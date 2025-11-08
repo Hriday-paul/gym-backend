@@ -1,8 +1,21 @@
-import { Schema, model, Model } from 'mongoose';
-import { IUser } from './user.interface';
-
+import mongoose, { Schema, model, Model, Types } from 'mongoose';
+import { ICompetitionResult, IUser } from './user.interface';
 
 export interface UserModel extends Model<IUser> { }
+
+const HeightSchema = new Schema<{ amount: number, category: string }>({
+  category: { type: String, default: null },
+  amount: { type: Number, default: 0 }
+});
+
+const CompetitionSchema = new Schema<ICompetitionResult>({
+  event_name: { type: String, required: true },
+  event_date: { type: Date, required: true },
+  division: { type: String, required: true, enum: ["Gi", "NoGi", "Gi Absolute", "NoGi Absolute"] },
+  city: { type: String, required: true },
+  state: { type: String, required: true },
+  result: { type: String, required: true, enum: ["Gold", "Silver", "Bronze", "DNP"] }
+});
 
 // Mongoose schema definition
 const userSchema: Schema<IUser> = new Schema(
@@ -13,7 +26,6 @@ const userSchema: Schema<IUser> = new Schema(
     },
     last_name: {
       type: String,
-      required: false
     },
     email: {
       type: String,
@@ -24,25 +36,13 @@ const userSchema: Schema<IUser> = new Schema(
       type: String,
       required: false,
     },
-    address: {
-      type: String,
-      required: false,
-    },
-    date_of_birth: {
-      type: String,
-      required: false,
-    },
-    bio: {
-      type: String,
-      required: false,
-    },
     password: {
       type: String,
       required: true
     },
     image: {
       type: String,
-      default: '',
+      default: null,
     },
     role: {
       type: String,
@@ -62,23 +62,6 @@ const userSchema: Schema<IUser> = new Schema(
       type: Boolean,
       default: false,
     },
-    isOnline: {
-      type: Boolean,
-      default: false,
-    },
-    fcmToken: {
-      type: String,
-      required: false,
-    },
-    isSocialLogin: {
-      type: Boolean,
-      default: false
-    },
-    notification: {
-      type: Boolean,
-      required: true,
-      default: true
-    },
     verification: {
       otp: {
         type: Schema.Types.Mixed,
@@ -92,6 +75,53 @@ const userSchema: Schema<IUser> = new Schema(
         default: false,
       },
     },
+    isSocialLogin: {
+      type: Boolean,
+      default: false
+    },
+    notification: {
+      type: Boolean,
+      required: true,
+      default: true
+    },
+
+    belt_rank: {
+      type: String,
+      enum: ["Purple", "Blue", "Brown", "Black"],
+      default: null
+    },
+
+    home_gym: {
+      type: String,
+      default: null
+    },
+
+    height: {
+      type: HeightSchema,
+      default: {
+        amount: 0,
+        category: null
+      }
+    },
+
+    weight: {
+      type: String,
+      default: "0"
+    },
+
+    disciplines: {
+      type: [String]
+    },
+    favourite_quote: {
+      type: String,
+      default: null
+    },
+
+    competition: {
+      type: CompetitionSchema,
+      default: null
+    },
+
     location: {
       type: {
         type: String,
@@ -102,8 +132,15 @@ const userSchema: Schema<IUser> = new Schema(
       coordinates: {
         type: [Number], // [longitude, latitude]
         required: true,
+        default : []
       },
     },
+
+     fcmToken: {
+      type: String,
+      required: false,
+    },
+
   },
   {
     timestamps: true,
@@ -112,6 +149,6 @@ const userSchema: Schema<IUser> = new Schema(
 );
 
 
-
+userSchema.index({ location: '2dsphere' });
 // User model creation
 export const User = model<IUser, UserModel>('users', userSchema);

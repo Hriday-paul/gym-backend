@@ -21,9 +21,8 @@ const createContact = async (payload: Icontact) => {
     'Got a support message from Marketplace app.',
     fs
       .readFileSync(emailPath, 'utf8')
-      .replace('{{name}}', payload?.firstName + " " + payload?.lastName)
+      .replace('{{name}}', payload?.name)
       .replace('{{email}}', payload?.email)
-      .replace('{{contact}}', payload?.contact)
       .replace('{{details}}', payload?.description)
   );
 
@@ -60,7 +59,7 @@ const replyContact = async (id: string, message: string) => {
     'Support Reply from Forager',
     fs
       .readFileSync(emailPath, 'utf8')
-      .replace('{{customer_name}}', contact?.firstName + " " + contact?.lastName)
+      .replace('{{customer_name}}', contact?.name)
       .replace('{{details}}', message)
   );
 
@@ -71,7 +70,7 @@ const replyContact = async (id: string, message: string) => {
 
 const getAllcontact = async (query: Record<string, any>) => {
   const contactModel = new QueryBuilder(Contact.find(), query)
-    .search(['firstName', 'lastName', 'email', 'contact'])
+    .search(['name','email'])
     .filter()
     .paginate()
     .sort();

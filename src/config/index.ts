@@ -12,15 +12,15 @@ const aws = {
   secretAccessKey: process.env.S3_BUCKET_SECRET_ACCESS_KEY,
   region: process.env.AWS_REGION,
   bucket: process.env.AWS_BUCKET_NAME,
-  spacesEndpoint : process.env.SPACES_ENDPOINT,
+  spacesEndpoint: process.env.SPACES_ENDPOINT,
 };
 
 export default {
   NODE_ENV: process.env.NODE_ENV,
   port: process.env.PORT,
   ip: process.env.IP,
-  SERVER_URL : process.env.SERVER_URL,
-  BASE_URL : process.env.BASE_URL,
+  SERVER_URL: process.env.SERVER_URL,
+  BASE_URL: process.env.BASE_URL,
 
   success_url: process.env.PAYMENT_SUCCESS_URL,
   cancel_url: process.env.PAYMENT_CANCEL_URL,
@@ -38,5 +38,5 @@ export default {
   stripe_secret: process.env.STRIPE_API_SECRET,
   stripe_key: process.env.STRIPE_API_KEY,
   stripe,
-  aws
+  aws,
 };

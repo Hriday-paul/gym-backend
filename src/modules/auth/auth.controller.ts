@@ -28,21 +28,7 @@ const createUser = catchAsync(async (req: Request<{}, {}, IUser>, res: Response)
 //login user
 const loginUser = catchAsync(async (req: Request<{}, {}, { email: string, password: string }>, res: Response) => {
 
-    const result = await authService.loginUser(req.body);
-    
-    sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message: 'Logged in successfully',
-        data: result,
-    });
-})
-
-//social login
-const socialLogin = catchAsync(async (req: Request<{}, {}, { email: string, image: string, first_name : string }>, res: Response) => {
-
-    const result = await authService.socialLogin(req.body);
-    
+    const result = await authService.loginUser(req.body)
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
@@ -53,7 +39,6 @@ const socialLogin = catchAsync(async (req: Request<{}, {}, { email: string, imag
 
 const adminLogin = catchAsync(async (req: Request<{}, {}, { email: string, password: string }>, res: Response) => {
     const result = await authService.adminLogin(req.body)
-    
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
@@ -61,6 +46,21 @@ const adminLogin = catchAsync(async (req: Request<{}, {}, { email: string, passw
         data: result,
     });
 })
+
+
+//social login
+const socialLogin = catchAsync(async (req: Request<{}, {}, { email: string, image: string, first_name: string }>, res: Response) => {
+
+    const result = await authService.socialLogin(req.body);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Logged in successfully',
+        data: result,
+    });
+})
+
 
 // change password
 const changePassword = catchAsync(async (req: Request, res: Response) => {

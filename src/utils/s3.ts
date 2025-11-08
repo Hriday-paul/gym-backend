@@ -6,9 +6,9 @@ import {
 import httpStatus from 'http-status';
 import AppError from '../error/AppError';
 import config from '../config';
-import { s3Client } from '../constants/aws';
 
 import multer, { memoryStorage } from "multer";
+import { s3Client } from '../config/aws';
 
 const storage = memoryStorage();
 
@@ -30,7 +30,8 @@ export const image_Upload = multer({
 export const uploadToS3 = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   { file, fileName }: { file: any; fileName: string },
-): Promise<string | null> => {
+): Promise<{ url: string; key: string } | null> => {
+
   const command = new PutObjectCommand({
     Bucket: config.aws.bucket,
     Key: fileName,
@@ -46,7 +47,7 @@ export const uploadToS3 = async (
 
     const url = `https://${config.aws.bucket}.s3.${config.aws.region}.amazonaws.com/${fileName}`;
 
-    return url;
+    return {url, key : fileName};
   } catch (error) {
     throw new AppError(httpStatus.BAD_REQUEST, 'File Upload failed');
   }
@@ -59,7 +60,7 @@ export const deleteFromS3 = async (key: string) => {
       Bucket: config.aws.bucket,
       Key: key,
     });
-    await s3Client.send(command);
+   return await s3Client.send(command);
   } catch (error) {
     console.log('🚀 ~ deleteFromS3 ~ error:', error);
     throw new Error('s3 file delete failed');

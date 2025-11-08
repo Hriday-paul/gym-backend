@@ -5,12 +5,10 @@ import config from ".";
 const connectDb = async () => {
     try {
         mongoose.set('strictQuery', false);
-        await mongoose.connect(config.database_url!, {
-            dbName: 'forager'
+        await mongoose.connect(config.database_url || '', {
+            dbName: 'ujitsu'
         });
-
         console.log(`DB Running On ${mongoose.connection.host}`);
-
     } catch (error) {
         process.exit(1);
     }

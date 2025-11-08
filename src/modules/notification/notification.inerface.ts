@@ -5,11 +5,10 @@ import {ObjectId as mongoId} from "mongodb"
 
 
 export interface INotification {
-  sender: ObjectId;
-  receiver: ObjectId;
+  sender: mongoId;
+  receiver: mongoId;
   receiverEmail: string;
   receiverRole: "user" | "admin";
-  product ?: mongoId
   message: string;
   fcmToken?: string;
   type?: "text" | "accept" | "reject" | "cancelled" | "payment" | "product";

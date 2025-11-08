@@ -11,19 +11,18 @@ import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
 import { generateOtp } from "../../utils/otpGenerator"
 import moment from "moment"
 import { sendEmail } from "../../utils/mailSender"
-import { sendAdminNotifications } from "../notification/notification.send.admin"
 import { sendNotification } from "../notification/notification.utils"
 
 
 const createUser = async (payload: IUser) => {
-    const { first_name, last_name, email, password = '', contact = '', address = '', bio = '', date_of_birth = '' } = payload
+    const { first_name, last_name, email, password = '', contact = '' } = payload
 
-    let isExist = await User.findOne({ email });
+    let isExist = await User.findOne({ email })
 
-    //check user is exist or not
+    //check user is exist & verified or not
     if (isExist && isExist?.isverified) {
         throw new AppError(
-            httpStatus.CONFLICT,
+            httpStatus.FORBIDDEN,
             'User already exists with this email',
         );
     }
@@ -31,7 +30,7 @@ const createUser = async (payload: IUser) => {
     // creat encrypted password
     const hashedPassword = await bcrypt.hash(password, 15);
 
-    const user = await User.findOneAndUpdate({ email }, { first_name, last_name, email, contact, password: hashedPassword, address, bio, date_of_birth }, { upsert: true, new: true });
+    const user = await User.findOneAndUpdate({ email }, { first_name, last_name, email, contact, password: hashedPassword }, { upsert: true, new: true }).select("first_name last_name email contact");
 
     if (!user) {
         throw new AppError(httpStatus.BAD_REQUEST, 'User creation failed');
@@ -39,27 +38,23 @@ const createUser = async (payload: IUser) => {
 
     const userDoc = (user as any).toObject();
     delete userDoc.password;
+    delete userDoc.fcmToken;
 
     return userDoc;
 };
 
 // Login
-const loginUser = async (payload: { email: string, password: string, fcmToken?: string, lat?: string, long?: string }) => {
+const loginUser = async (payload: { email: string, password: string, fcmToken?: string }) => {
 
-    const user: IUser | null = await User.findOne({ email: payload?.email, role: { $nin: ['admin'] } });
+    const user: IUser | null = await User.findOne({ email: payload?.email, role: { $nin: "admin" } });
 
     if (!user) {
         // If user not found, throw error
         throw new AppError(httpStatus.NOT_FOUND, 'Account not found');
     }
-
     else {
         if (!user?.status) {
             throw new AppError(httpStatus.FORBIDDEN, 'Your account is blocked');
-        }
-
-        if (user?.isSocialLogin) {
-            throw new AppError(httpStatus.FORBIDDEN, 'You account is connected by social login');
         }
 
         if (user?.isDeleted) {
@@ -77,7 +72,6 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
             throw new AppError(httpStatus.BAD_REQUEST, 'Please check your credentials and try again');
         }
 
-
         // Update FCM token if provided
         let updatedUser = user;
         if (payload.fcmToken) {
@@ -88,20 +82,12 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
             ) as IUser;
         }
 
-        if (payload?.lat && payload?.long) {
-            updatedUser = await User.findOneAndUpdate(
-                { email: payload.email },
-                { lat: payload?.lat, long: payload?.long },
-                { new: true }
-            ) as IUser;
-        }
-
         // Choose the most up-to-date FCM token to use
         const tokenToUse = payload.fcmToken || user?.fcmToken;
 
         // Send notification if FCM token exists and user notification is unabled
-        if (tokenToUse && user.notification) {
-            sendNotification([tokenToUse], {
+        if (user.notification) {
+            sendNotification(tokenToUse ? [tokenToUse] : [], {
                 title: `Login successfully`,
                 message: `New user login to your account`,
                 receiver: updatedUser._id,
@@ -111,16 +97,11 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
             });
         }
 
-        // sendAdminNotifications({
-        //     sender: user._id,
-        //     message: `${user.first_name} log in successful! And the email is ${payload.email}`,
-        //     title: `New user login to his account`,
-        // });
-
     }
 
     const userDoc = (user as any).toObject();
     delete userDoc.password;
+    delete userDoc.role;
 
     const jwtPayload: { userId: string; role: string } = {
         userId: user?._id?.toString() as string,
@@ -130,7 +111,7 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
     const accessToken = createToken(
         jwtPayload,
         config.jwt_access_secret as string,
-        60 * 60 * 24 * 7, //7 days
+        60 * 60 * 24 * 366, //366 days
     );
 
     const refreshToken = createToken(
@@ -166,11 +147,11 @@ const adminLogin = async (payload: { email: string, password: string }) => {
         if (!passwordMatched) {
             throw new AppError(httpStatus.BAD_REQUEST, 'Please check your credentials and try again');
         }
+
     }
 
     const userDoc = (user as any).toObject();
     delete userDoc.password;
-
 
     const jwtPayload: { userId: string; role: string } = {
         userId: user?._id?.toString() as string,
@@ -196,7 +177,8 @@ const adminLogin = async (payload: { email: string, password: string }) => {
     };
 };
 
-const socialLogin = async ({ email, image, first_name, lat, long }: { email: string, image: string, first_name: string, lat?: string, long?: string }) => {
+
+const socialLogin = async ({ email, image, first_name }: { email: string, image: string, first_name: string }) => {
 
     let user: IUser | null = await User.findOne({ email: email, role: { $ne: "admin" } });
 
@@ -213,7 +195,7 @@ const socialLogin = async ({ email, image, first_name, lat, long }: { email: str
             throw new AppError(httpStatus.FORBIDDEN, 'Your account is deleted');
         }
 
-        user = await User.findOneAndUpdate({ email }, { email, image, first_name, isverified: true, isSocialLogin: true, lat: lat, long }, { upsert: true, new: true }) as IUser;
+        user = await User.findOneAndUpdate({ email }, { email, image, first_name, isverified: true, isSocialLogin: true }, { upsert: true, new: true }) as IUser;
     }
 
     const userDoc = (user as any).toObject();
@@ -228,7 +210,7 @@ const socialLogin = async ({ email, image, first_name, lat, long }: { email: str
     const accessToken = createToken(
         jwtPayload,
         config.jwt_access_secret as string,
-        60 * 60 * 24 * 7, //7 days
+        60 * 60 * 24 * 366, //366 days
     );
 
     const refreshToken = createToken(
@@ -243,6 +225,7 @@ const socialLogin = async ({ email, image, first_name, lat, long }: { email: str
         refreshToken,
     };
 };
+
 
 
 // Change password
@@ -313,7 +296,7 @@ const forgotPassword = async (email: string) => {
 
     const otpEmailPath = path.join(
         __dirname,
-        '../../../public/view/forgot_pass_mail.html',
+        '../../public/view/forgot_pass_mail.html',
     );
 
     await sendEmail(
@@ -405,7 +388,7 @@ const refreshToken = async (token: string) => {
     const accessToken = createToken(
         jwtPayload,
         config.jwt_access_secret as string,
-        60 * 60 * 24 * 7, //7 days
+        60 * 60 * 24 * 366, //366 days
     );
 
     const refreshToken = createToken(

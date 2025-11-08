@@ -17,12 +17,10 @@ const app: Express = express();
 multer();
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(cors({
-  // origin: ["https://sellx.no", "https://www.sellx.no"],
-  origin : "*",
+  origin: "*",
   credentials: true
 }));
-app.use(express.json({ limit: '500mb' }));
-app.use(express.urlencoded({ limit: '500mb', extended: true }));
+app.use(express.json());
 app.use(cookieParser());
 app.use(express.static('public'));
 

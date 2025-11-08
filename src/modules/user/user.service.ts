@@ -1,15 +1,15 @@
+import mongoose from "mongoose";
 import QueryBuilder from "../../builder/QueryBuilder";
 import AppError from "../../error/AppError";
-import { IUser } from "./user.interface";
+import { ICompetitionResult, IUser } from "./user.interface";
 import { User } from "./user.models";
 import httpStatus from 'http-status'
 
-// update user profile
+
 const updateProfile = async (payload: IUser, userId: string, image: string) => {
+    const { contact, first_name, last_name, belt_rank, disciplines, email, favourite_quote, height, home_gym, weight, location } = payload
 
-    const { contact, first_name, last_name, address, bio, date_of_birth, location, notification } = payload
-
-    const updateFields: Partial<IUser> = { contact, first_name, last_name, address, bio, date_of_birth, location, notification };
+    const updateFields: Partial<IUser> = { contact, first_name, last_name, belt_rank, disciplines, email, favourite_quote, height, home_gym, weight, location };
 
     if (image) updateFields.image = image;
 
@@ -20,7 +20,6 @@ const updateProfile = async (payload: IUser, userId: string, image: string) => {
         }
     });
 
-    // check updated field found or not
     if (Object.keys(updateFields).length === 0) {
         throw new AppError(
             httpStatus.NOT_FOUND,
@@ -34,8 +33,8 @@ const updateProfile = async (payload: IUser, userId: string, image: string) => {
 }
 
 //get all users
-const allUsers = async (query: Record<string, any>) => {
-    const userModel = new QueryBuilder(User.find({ role: { $ne: "admin" }, isDeleted: false }, { password: 0 }), query)
+const allUsers = async (query: Record<string, any>, userId: string) => {
+    const userModel = new QueryBuilder(User.find({ role: { $ne: "admin" }, isverified: true, _id: { $ne: userId }, isDeleted: false }, { password: 0, verification: 0, fcmToken: 0, isDeleted: 0, isSocialLogin: 0 }), query)
         .search(['first_name', 'last_name', 'email', 'contact'])
         .filter()
         .paginate()
@@ -48,9 +47,94 @@ const allUsers = async (query: Record<string, any>) => {
     };
 }
 
+const getUnfriends = async (query: Record<string, any>, userId: string) => {
+
+    const page = parseInt(query?.page) || 1;
+    const limit = parseInt(query?.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const search = query?.searchTerm || "";
+
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
+    const filters: any = {
+        $or: [
+            { first_name: { $regex: search, $options: "i" } },
+            { last_name: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+            { contact: { $regex: search, $options: "i" } },
+        ],
+        _id: { $ne: userObjectId },
+        role: { $ne: "admin" },
+        isverified: true,
+        isDeleted: false
+    };
+
+    const result = await User.aggregate([
+        {
+            $match: filters
+        },
+        {
+            $lookup: {
+                from: "friends",
+                let: { userId: "$_id" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $or: [
+                                    { $and: [{ $eq: ["$user_id", userObjectId] }, { $eq: ["$friend_id", "$$userId"] }] },
+                                    { $and: [{ $eq: ["$friend_id", userObjectId] }, { $eq: ["$user_id", "$$userId"] }] }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                as: "friendship"
+            }
+        },
+        {
+            $match: { friendship: { $size: 0 } }
+        },
+        {
+            $project: {
+                password: 0,
+                verification: 0,
+                fcmToken: 0,
+                isDeleted: 0,
+                isSocialLogin: 0
+            }
+        },
+        // 4. Pagination
+        { $skip: skip },
+        { $limit: limit },
+        { $sort: { createdAt: -1 } },
+    ]);
+
+    const total = await User.countDocuments(filters);
+
+    const totalPage = Math.ceil(total / limit);
+
+    const meta = {
+        page,
+        limit,
+        total,
+        totalPage,
+    };
+
+    return { data: result, meta }
+};
+
 
 const getUserById = async (id: string) => {
-    const result = await User.findById(id, { password: 0, verification: 0 });
+    const result = await User.findById(id, {
+        password: 0, verification: 0, "isDeleted": 0,
+        "isSocialLogin": 0,
+        "isverified": 0,
+        fcmToken: 0,
+        notification: 0,
+        status: 0,
+    });
     return result;
 };
 
@@ -60,6 +144,12 @@ const status_update_user = async (payload: { status: boolean }, id: string) => {
     const result = await User.updateOne({ _id: id }, { status: payload?.status })
 
     return result
+}
+
+//add recent competition
+const AddRecentCompetition = async (payload: ICompetitionResult, userId: string) => {
+    const res = await User.updateOne({ _id: userId }, { competition: payload });
+    return res
 }
 
 const deletemyAccount = async (userId: string) => {
@@ -78,16 +168,12 @@ const deletemyAccount = async (userId: string) => {
     return res;
 }
 
-const userDetails = async(userId : string)=>{
-    const res = await User.findById(userId).select("-password -fcmToken -verification");
-    return res;
-}
-
 export const userService = {
     updateProfile,
     getUserById,
     allUsers,
     status_update_user,
+    AddRecentCompetition,
     deletemyAccount,
-    userDetails
+    getUnfriends
 }

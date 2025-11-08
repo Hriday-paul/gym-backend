@@ -39,8 +39,8 @@ export const sendNotification = async (
         },
         android: {
           notification: {
-            icon: "http://10.10.10.9:3000/logo.png",
-            imageUrl: "http://10.10.10.9:3000/logo.png",
+            icon: "http://10.10.10.9:4300/logo.png",
+            imageUrl: "http://10.10.10.9:4300/logo.png",
             clickAction: 'notification'
           }
         },
@@ -49,7 +49,7 @@ export const sendNotification = async (
             "apns-push-type": "alert",
           },
           fcmOptions: {
-            imageUrl: 'http://10.10.10.9:3000/logo.png'
+            imageUrl: 'http://10.10.10.9:4300/logo.png'
           },
           payload: {
             aps: {
@@ -60,7 +60,7 @@ export const sendNotification = async (
         },
         webpush: {
           headers: {
-            image: 'http://10.10.10.9:3000/logo.png'
+            image: 'http://10.10.10.9:4300/logo.png'
           }
         },
       });

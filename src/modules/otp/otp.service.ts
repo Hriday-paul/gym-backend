@@ -120,7 +120,7 @@ const resendOtp = async (email: string) => {
 
   const otpEmailPath = path.join(
     __dirname,
-    '../../../public/view/otp_mail.html',
+    '../../public/view/otp_mail.html',
   );
 
   if (user) {

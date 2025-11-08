@@ -5,7 +5,7 @@ import Notification from "./notification.model";
 
 const getNotificationFromDb = async (query: Record<string, any>) => {
 
-  const notificationModel = new QueryBuilder(Notification.find().populate('product'), query).sort().filter();
+  const notificationModel = new QueryBuilder(Notification.find(), query).sort().filter().paginate();
       const data: any = await notificationModel.modelQuery;
       const meta = await notificationModel.countTotal();
       return {

@@ -3,6 +3,8 @@ import catchAsync from '../../utils/catchAsync';
 import { otpServices } from './otp.service';
 import sendResponse from '../../utils/sendResponse';
 import { Request, Response } from 'express';
+import { jwtDecode } from 'jwt-decode';
+import AppError from '../../error/AppError';
 
 const verifyOtp = catchAsync(async (req: Request, res: Response) => {
   const token = req?.headers?.token;
