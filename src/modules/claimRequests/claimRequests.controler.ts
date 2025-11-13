@@ -65,8 +65,28 @@ const ApproveClaimReq = catchAsync(async (req: Request, res: Response) => {
         data: result,
     });
 });
+const claimStats = catchAsync(async (req: Request, res: Response) => {
+    const result = await claimReqService.claimStats();
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Claim stats retrived successfully',
+        data: result,
+    });
+});
+const allClaims = catchAsync(async (req: Request, res: Response) => {
+    const result = await claimReqService.allClaims(req.query);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'All Claim reqs retrived successfully',
+        data: result,
+    });
+});
 
 export const claimReqControler = {
     AddclaimReq,
-    ApproveClaimReq
+    ApproveClaimReq,
+    claimStats,
+    allClaims
 }

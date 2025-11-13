@@ -1,3 +1,4 @@
+import QueryBuilder from "../../builder/QueryBuilder";
 import AppError from "../../error/AppError";
 import { GYM } from "../gym/gym.model";
 import { IClaimReq } from "./claimRequests.interface";
@@ -46,7 +47,7 @@ const ApproveClaimReq = async (claimId: string) => {
     }
 
     //owner transfer
-    const updated = await GYM.updateOne({ _id: exist?.gym }, { user: exist?.user, isClaimed : true });
+    const updated = await GYM.updateOne({ _id: exist?.gym }, { user: exist?.user, isClaimed: true });
 
 
     // update status
@@ -54,8 +55,32 @@ const ApproveClaimReq = async (claimId: string) => {
 
 }
 
+const claimStats = async () => {
+    const total = await ClaimReq.countDocuments();
+    const pending = await ClaimReq.countDocuments({ status: "pending" });
+    const approved = await ClaimReq.countDocuments({ status: "approved" });
+    const rejected = await ClaimReq.countDocuments({ status: "rejected" });
+
+    return { total, pending, approved, rejected }
+}
+
+const allClaims = async (query: Record<string, any>) => {
+    const claimModel = new QueryBuilder(ClaimReq.find().populate("gym").populate("user"), query)
+        .search(['email', 'phone'])
+        .paginate()
+        .sort();
+    const data: any = await claimModel.modelQuery;
+    const meta = await claimModel.countTotal();
+    return {
+        data,
+        meta,
+    };
+}
+
 export const claimReqService = {
     AddclaimReq,
     CheckclaimReq,
-    ApproveClaimReq
+    ApproveClaimReq,
+    claimStats,
+    allClaims
 }

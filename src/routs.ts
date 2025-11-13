@@ -8,6 +8,8 @@ import { friendRouts } from './modules/friends/friends.rout';
 import { eventRouts } from './modules/event/even.rout';
 import { notificationRoute } from './modules/notification/notification.routes';
 import { claimReqRouts } from './modules/claimRequests/claimRequests.rout';
+import { dashboardRouts } from './modules/dasboard/dashboard.rout';
+import { favouriteRouts } from './modules/favourites/favourites.rout';
 
 const router = express.Router();
 
@@ -47,6 +49,14 @@ const moduleRoutes = [
     {
         path: '/claim-reqs',
         route: claimReqRouts,
+    },
+    {
+        path: '/dashboard',
+        route: dashboardRouts,
+    },
+    {
+        path: '/save',
+        route: favouriteRouts,
     },
 ];
 moduleRoutes.forEach(route => router.use(route.path, route.route));

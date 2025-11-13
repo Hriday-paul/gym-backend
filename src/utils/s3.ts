@@ -13,17 +13,17 @@ import { s3Client } from '../config/aws';
 const storage = memoryStorage();
 
 export const image_Upload = multer({
-    storage,
-    limits: { fileSize: 1024 * 1024 * 10 /* 10 mb */ },
-    fileFilter(req, file, cb) {
-        // const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-        // if (allowedTypes.includes(file.mimetype)) {
-        //     cb(null, true);
-        // } else {
-        //     cb(new Error('File type is not allowed'));
-        // }
-        cb(null, true);
-    },
+  storage,
+  limits: { fileSize: 1024 * 1024 * 1000 }, /* 10 mb */
+  fileFilter(req, file, cb) {
+    // const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    // if (allowedTypes.includes(file.mimetype)) {
+    //     cb(null, true);
+    // } else {
+    //     cb(new Error('File type is not allowed'));
+    // }
+    cb(null, true);
+  },
 });
 
 //upload a single file
@@ -47,7 +47,7 @@ export const uploadToS3 = async (
 
     const url = `https://${config.aws.bucket}.s3.${config.aws.region}.amazonaws.com/${fileName}`;
 
-    return {url, key : fileName};
+    return { url, key: fileName };
   } catch (error) {
     throw new AppError(httpStatus.BAD_REQUEST, 'File Upload failed');
   }
@@ -60,7 +60,7 @@ export const deleteFromS3 = async (key: string) => {
       Bucket: config.aws.bucket,
       Key: key,
     });
-   return await s3Client.send(command);
+    return await s3Client.send(command);
   } catch (error) {
     console.log('🚀 ~ deleteFromS3 ~ error:', error);
     throw new Error('s3 file delete failed');

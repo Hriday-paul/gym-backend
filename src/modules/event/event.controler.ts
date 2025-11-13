@@ -70,13 +70,13 @@ const deleteEvent = catchAsync(async (req, res) => {
     });
 })
 const updateEvent = catchAsync(async (req, res) => {
-    let image;
 
     if (req.file) {
-        image = await uploadToS3({
+        const image = await uploadToS3({
             file: req.file,
             fileName: `images/events/${Math.floor(100000 + Math.random() * 900000)}`,
         });
+        req.body.image = image
     }
     const result = await eventService.updateEvent(req.body, req.params.id, req.user?._id)
     sendResponse(res, {
