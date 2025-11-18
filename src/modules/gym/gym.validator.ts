@@ -66,6 +66,10 @@ export const gymAddValidator = [
         .notEmpty()
         .withMessage('To is required'),
 
+    // check('class_schedules.*.name')
+    // .notEmpty()
+    // .withMessage('Name is required'),
+
     check('disciplines')
         .isArray()
         .withMessage('disciplines must be array'),
@@ -168,13 +172,22 @@ export const nearGymValidator = [
         .isIn(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
         .withMessage('Invalid day'),
 
-        query("hour").notEmpty()
+    query("hour").notEmpty()
         .withMessage('hour time is required')
-        .isInt({min : 1, max : 24})
+        .isInt({ min: 1, max: 24 })
         .withMessage('Invalid hour time'),
 
-        query("minute").notEmpty()
+    query("minute").notEmpty()
         .withMessage('minute time is required')
-        .isInt({min : 0, max : 60})
+        .isInt({ min: 0, max: 60 })
         .withMessage('Invalid minute time'),
+
+    query("long").trim().not().isEmpty().withMessage('long is required').isFloat().withMessage("long invalid"),
+    query("lat").trim().not().isEmpty().withMessage('lat is required').isFloat().withMessage("lat invalid"),
+]
+
+export const allMatsvalidator = [
+    query("long").trim().optional().isFloat().withMessage("long invalid"),
+    query("lat").trim().optional().isFloat().withMessage("lat invalid"),
+    query("distance").trim().optional().isFloat().withMessage("distance invalid"),
 ]

@@ -3,7 +3,7 @@ import req_validator from "../../middleware/req_validation";
 import auth from "../../middleware/auth";
 import { USER_ROLE } from "../user/user.constants";
 import { gymControler } from "./gym.controler";
-import { deleteGymImageValidator, gymAddValidator, gymUpdateValidator, nearGymValidator } from "./gym.validator";
+import { allMatsvalidator, deleteGymImageValidator, gymAddValidator, gymUpdateValidator, nearGymValidator } from "./gym.validator";
 import { image_Upload } from "../../utils/s3";
 import parseData from "../../middleware/parseData";
 
@@ -18,14 +18,25 @@ router.post(
     req_validator(),
     gymControler.AddGymByUser,
 );
+router.post(
+    '/admin',
+    auth(USER_ROLE.admin),
+    image_Upload.array('images'),
+    parseData(),
+    gymAddValidator,
+    req_validator(),
+    gymControler.AddGymByAdmin,
+);
+
+router.get("/", auth(USER_ROLE.admin), gymControler.allGyms);
 
 router.get("/my-gyms",
     auth(USER_ROLE.user),
     gymControler.MyGyms
 )
 router.get("/mats",
-    // nearGymValidator,
-    // req_validator(),
+    allMatsvalidator,
+    req_validator(),
     auth(USER_ROLE.user),
     gymControler.allMats
 )
@@ -38,8 +49,8 @@ router.get("/mats/near-me",
 
 router.patch(
     '/:id',
-    auth(USER_ROLE.user),
-    image_Upload.array('image'),
+    auth(USER_ROLE.user, USER_ROLE.admin),
+    image_Upload.array('images'),
     parseData(),
     gymUpdateValidator,
     req_validator(),
@@ -54,12 +65,12 @@ router.get("/:id",
 router.delete("/gym-image",
     deleteGymImageValidator,
     req_validator(),
-    auth(USER_ROLE.user),
+    auth(USER_ROLE.user, USER_ROLE.admin),
     gymControler.deleteGymImage
 )
 
 router.delete("/:id",
-    auth(USER_ROLE.user),
+    auth(USER_ROLE.user, USER_ROLE.admin),
     gymControler.DeleteGym
 )
 

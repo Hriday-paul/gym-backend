@@ -161,7 +161,7 @@ class QueryBuilder<T> {
     return this;
   }
 
-  
+
 
   // Filter
   filter() {
@@ -175,6 +175,27 @@ class QueryBuilder<T> {
 
     return this;
   }
+
+  // Filter (Use OR instead of AND)
+  filterOrOperation() {
+    const queryObj = { ...this.query };
+
+    // Remove non-filter fields
+    const excludeFields = ['searchTerm', 'sort', 'limit', 'page', 'fields'];
+    excludeFields.forEach(el => delete queryObj[el]);
+
+    // Convert queryObj into OR conditions
+    const orConditions = Object.keys(queryObj).map(key => ({
+      [key]: queryObj[key],
+    }));
+
+    if (orConditions.length > 0) {
+      this.modelQuery = this.modelQuery.find({ $or: orConditions });
+    }
+
+    return this;
+  }
+
 
   // Sorting
   sort() {

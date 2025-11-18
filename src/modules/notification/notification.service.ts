@@ -5,13 +5,13 @@ import Notification from "./notification.model";
 
 const getNotificationFromDb = async (query: Record<string, any>) => {
 
-  const notificationModel = new QueryBuilder(Notification.find(), query).sort().filter().paginate();
-      const data: any = await notificationModel.modelQuery;
-      const meta = await notificationModel.countTotal();
-      return {
-          data,
-          meta,
-      };
+  const notificationModel = new QueryBuilder(Notification.find(query), query).sort().filter().paginate();
+  const data: any = await notificationModel.modelQuery;
+  const meta = await notificationModel.countTotal();
+  return {
+    data,
+    meta,
+  };
 };
 
 const updateNotification = async (
@@ -46,9 +46,33 @@ const makeReadAll = async (user: string) => {
   return result;
 };
 
+const deleteNotification = async (id: string, user: string) => {
+  const result = await Notification.deleteOne(
+    { _id: id, receiver: user }
+  );
+  return result;
+};
+
+const dltAllNotification = async (user: string) => {
+  const result = await Notification.deleteMany(
+    { receiver: user },
+  );
+  return result;
+};
+
+const notificationUnReadCount = async (user: string) => {
+  const result = await Notification.countDocuments(
+    { receiver: user, isRead: false },
+  );
+  return result;
+};
+
 export const notificationServices = {
   getNotificationFromDb,
   updateNotification,
   makeMeRead,
-  makeReadAll
+  makeReadAll,
+  deleteNotification,
+  dltAllNotification,
+  notificationUnReadCount
 };

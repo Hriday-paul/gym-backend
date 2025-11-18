@@ -47,11 +47,30 @@ const ApproveClaimReq = async (claimId: string) => {
     }
 
     //owner transfer
-    const updated = await GYM.updateOne({ _id: exist?.gym }, { user: exist?.user, isClaimed: true });
+    await GYM.updateOne({ _id: exist?.gym }, { user: exist?.user, isClaimed: true });
 
 
     // update status
     await ClaimReq.updateOne({ _id: claimId }, { status: "approved" });
+
+}
+
+const RejectClaimReq = async (claimId: string) => {
+
+    //check is exist or not
+    const exist = await ClaimReq.findOne({ _id: claimId });
+
+    if (!exist) {
+        throw new AppError(httpstatus.NOT_FOUND, "Claim request not available");
+    }
+
+    if (exist.status == "rejected") {
+        throw new AppError(httpstatus.BAD_REQUEST, "Claim already rejected");
+    }
+
+
+    // update status
+    await ClaimReq.updateOne({ _id: claimId }, { status: "rejected" });
 
 }
 
@@ -65,7 +84,10 @@ const claimStats = async () => {
 }
 
 const allClaims = async (query: Record<string, any>) => {
-    const claimModel = new QueryBuilder(ClaimReq.find().populate("gym").populate("user"), query)
+    const claimModel = new QueryBuilder(ClaimReq.find().populate({
+        path: "gym",
+        match: { _id: { $exists: true } }
+    }).populate("user"), query)
         .search(['email', 'phone'])
         .paginate()
         .sort();
@@ -81,6 +103,7 @@ export const claimReqService = {
     AddclaimReq,
     CheckclaimReq,
     ApproveClaimReq,
+    RejectClaimReq,
     claimStats,
     allClaims
 }

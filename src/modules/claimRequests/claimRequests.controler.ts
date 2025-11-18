@@ -65,6 +65,17 @@ const ApproveClaimReq = catchAsync(async (req: Request, res: Response) => {
         data: result,
     });
 });
+
+const RejectClaimReq = catchAsync(async (req: Request, res: Response) => {
+    const result = await claimReqService.RejectClaimReq(req.params.id);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Claim rejected successfully',
+        data: result,
+    });
+});
+
 const claimStats = catchAsync(async (req: Request, res: Response) => {
     const result = await claimReqService.claimStats();
     sendResponse(res, {
@@ -88,5 +99,6 @@ export const claimReqControler = {
     AddclaimReq,
     ApproveClaimReq,
     claimStats,
-    allClaims
+    allClaims,
+    RejectClaimReq
 }

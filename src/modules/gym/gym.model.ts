@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import { IGym, ISchedule } from "./gym.interface";
+import { IClsSchedule, IGym, ISchedule } from "./gym.interface";
 
 const ScheduleSchema = new Schema<ISchedule>({
     day: { type: String, required: true, enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] },
@@ -7,6 +7,15 @@ const ScheduleSchema = new Schema<ISchedule>({
     from_view: { type: String, required: true },
     to: { type: Number, required: true },
     to_view: { type: String, required: true },
+});
+
+const ClassScheduleSchema = new Schema<IClsSchedule>({
+    day: { type: String, required: true, enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] },
+    from: { type: Number, required: true },
+    from_view: { type: String, required: true },
+    to: { type: Number, required: true },
+    to_view: { type: String, required: true },
+    name : {type : String, default : null}
 });
 
 const GymSchema = new Schema<IGym>(
@@ -65,7 +74,7 @@ const GymSchema = new Schema<IGym>(
             default: null,
         },
         mat_schedules: [ScheduleSchema],
-        class_schedules: [ScheduleSchema],
+        class_schedules: [ClassScheduleSchema],
         disciplines: {
             type: [String],
             default: [],

@@ -86,7 +86,7 @@ const MyGyms = catchAsync(async (req, res) => {
 })
 
 const GymDetails = catchAsync(async (req, res) => {
-    const result = await gymService.GymDetails(req.params.id);
+    const result = await gymService.GymDetails(req.params.id, req.user?._id);
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
@@ -174,6 +174,17 @@ const allMats = catchAsync(async (req, res) => {
     });
 })
 
+const allGyms = catchAsync(async (req, res) => {
+
+    const result = await gymService.allGyms(req.query)
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'All gyms retrived successfully',
+        data: result,
+    });
+})
+
 export const gymControler = {
     AddGymByAdmin,
     AddGymByUser,
@@ -183,5 +194,6 @@ export const gymControler = {
     updateGym,
     nearMeMats,
     allMats,
-    GymDetails
+    GymDetails,
+    allGyms
 }

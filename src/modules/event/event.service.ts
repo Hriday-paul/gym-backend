@@ -8,7 +8,7 @@ import httpStatus from "http-status";
 const allEvents = async (query: Record<string, any>) => {
     const eventModel = new QueryBuilder(Event.find(), query)
         .search(['name', 'venue'])
-        .filter()
+        .filterOrOperation()
         .paginate()
         .sort();
     const data: any = await eventModel.modelQuery;

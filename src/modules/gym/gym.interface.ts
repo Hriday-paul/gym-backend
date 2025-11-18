@@ -1,6 +1,7 @@
 import { ObjectId } from "mongoose";
 
 export interface ISchedule { day: string, from: number, from_view : string, to: number, to_view : string }
+export interface IClsSchedule { name : string, day: string, from: number, from_view : string, to: number, to_view : string }
 
 export interface IGym {
     images: { key: string; url: string }[],
@@ -16,7 +17,7 @@ export interface IGym {
     facebook: string,
     instagram: string,
     mat_schedules: ISchedule[],
-    class_schedules: ISchedule[],
+    class_schedules: IClsSchedule[],
     disciplines: string[],
 
     isClaimed: boolean,

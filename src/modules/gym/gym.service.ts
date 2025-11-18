@@ -4,6 +4,11 @@ import { User } from "../user/user.models";
 import { IGym } from "./gym.interface";
 import { GYM } from "./gym.model";
 import httpstatus from "http-status"
+import { ObjectId } from "mongodb"
+import httpStatus from "http-status"
+import { Favorites } from "../favourites/favourites.model";
+import QueryBuilder from "../../builder/QueryBuilder";
+import { sendNotification } from "../notification/notification.utils";
 
 export const muniteNumber_to_time = (minute: number) => {
     const hour = Math.floor(minute / 60);
@@ -21,7 +26,7 @@ const AddGymByAdmin = async (payload: IGym, userId: string) => {
         return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
     })
     const classchedulesFormat = payload.class_schedules.map(i => {
-        return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
+        return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
     })
 
     const res = await GYM.create({ ...payload, isClaimed: false, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat });
@@ -30,14 +35,32 @@ const AddGymByAdmin = async (payload: IGym, userId: string) => {
 
 const AddGymByUser = async (payload: IGym, userId: string) => {
 
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new AppError(httpStatus.NOT_FOUND, "User not found")
+    }
+
     const matschedulesFormat = payload.mat_schedules.map(i => {
         return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
     })
     const classchedulesFormat = payload.class_schedules.map(i => {
-        return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
+        return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
     })
 
     const res = await GYM.create({ ...payload, isClaimed: true, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat });
+
+    const tokenToUse = user?.fcmToken;
+
+    sendNotification(tokenToUse ? [tokenToUse] : [], {
+        title: `Gym Added`,
+        message: `New Gym added successfully to your account`,
+        receiver: user?._id,
+        receiverEmail: payload.email,
+        receiverRole: user.role,
+        sender: user._id,
+    });
+
     return res;
 }
 
@@ -46,9 +69,46 @@ const MyGyms = async (userId: string) => {
     return res;
 }
 
-const GymDetails = async (gymId: string) => {
-    const res = await GYM.findById(gymId);
-    return res;
+const GymDetails = async (gymId: string, userId: string) => {
+
+    const details = await GYM.aggregate([
+        { $match: { _id: new ObjectId(gymId) } },
+        {
+            $lookup: {
+                from: "favourites",
+                let: { gymId: "$_id", userId: new ObjectId(userId) },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ["$gym", "$$gymId"] },
+                                    { $eq: ["$user", "$$userId"] },
+                                ]
+                            }
+                        }
+                    },
+                    { $limit: 1 } // we only need to know if it exists
+                ],
+                as: "favouriteStatus"
+            }
+        },
+        {
+            $addFields: {
+                isSaved: { $gt: [{ $size: "$favouriteStatus" }, 0] }
+            }
+        },
+        { $unset: "favouriteStatus" },
+    ]);
+
+    if (!details[0]) {
+        throw new AppError(
+            httpStatus.NOT_FOUND,
+            'Product not found',
+        );
+    }
+
+    return details[0]
 }
 
 const DeleteGym = async (userId: string, gymId: string) => {
@@ -62,6 +122,7 @@ const DeleteGym = async (userId: string, gymId: string) => {
         throw new AppError(httpstatus.BAD_REQUEST, "You are not owner this gym")
     }
 
+    await Favorites.deleteMany({ gym: gymId })
     const res = await GYM.deleteOne({ _id: gymId });
 
     return res;
@@ -78,14 +139,14 @@ const updateGym = async (payload: IIGym, gymId: string) => {
         return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
     })
     const classchedulesFormat = class_schedules.map(i => {
-        return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
+        return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name }
     })
 
     const formattedLocation = location?.coordinates
         ? { type: 'Point', coordinates: location.coordinates }
         : undefined;
 
-    const updateFields: Partial<IGym> = { city, class_schedules: classchedulesFormat, description, disciplines, email, facebook, instagram, location : formattedLocation, mat_schedules: matschedulesFormat, name, phone, state, street, website, zip_code };
+    const updateFields: Partial<IGym> = { city, class_schedules: classchedulesFormat, description, disciplines, email, facebook, instagram, location: formattedLocation, mat_schedules: matschedulesFormat, name, phone, state, street, website, zip_code };
 
     // Remove undefined or null fields to prevent overwriting existing values with null
     Object.keys(updateFields).forEach((key) => {
@@ -141,6 +202,9 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
     const hour = query.hour
     const minute = query.minute
 
+    const lat = query?.lat;
+    const long = query?.long;
+
     const current = Number(hour) * 60 + Number(minute);
 
     const filters: any = {
@@ -160,22 +224,13 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
         ]
     };
 
-    const user = await User.findOne({ _id: userId });
-
-    if (!user) {
-        throw new AppError(
-            httpstatus.NOT_FOUND,
-            'User not found',
-        );
-    }
-
-    if (!user?.location?.coordinates || user?.location?.coordinates.length < 2) {
+    if (!lat || !long) {
         return []
     }
 
     const userLocation: { type: "Point"; coordinates: [number, number] } = {
         type: "Point",
-        coordinates: user?.location?.coordinates, // [longitude, latitude]
+        coordinates: [Number(long), Number(lat)], // [longitude, latitude]
     };
 
     const products = await GYM.aggregate([
@@ -198,10 +253,11 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
 }
 
 const allMats = async (query: Record<string, any>, userId: string) => {
-
-    const distance = Number(query?.distance) || 2000
-    const disciplines = query?.disciplines ? query?.disciplines.split(",") : []
+    const distance = query?.distance;
+    const disciplines = query?.disciplines ? query?.disciplines.split(",") : [];
     const search = query?.searchTerm || "";
+    const lat = query?.lat;
+    const long = query?.long;
 
     const filters: any = {
         $or: [
@@ -217,41 +273,49 @@ const allMats = async (query: Record<string, any>, userId: string) => {
         filters.disciplines = { $in: disciplines };
     }
 
-    const user = await User.findOne({ _id: userId });
+    const pipeline: any[] = [];
 
-    if (!user) {
-        throw new AppError(
-            httpstatus.NOT_FOUND,
-            'User not found',
-        );
-    }
+    // Add geoNear if distance, long, lat query is present
+    if (distance && long && lat) {
+        const cordinates = [Number(long), Number(lat)]
 
-    if (!user?.location?.coordinates || user?.location?.coordinates.length < 2) {
-        return []
-    }
+        const userLocation = {
+            type: "Point",
+            coordinates: cordinates, // [longitude, latitude]
+        };
 
-    const userLocation: { type: "Point"; coordinates: [number, number] } = {
-        type: "Point",
-        coordinates: user?.location?.coordinates || [], // [longitude, latitude]
-    };
-
-    const products = await GYM.aggregate([
-        {
+        pipeline.push({
             $geoNear: {
                 near: userLocation,
                 distanceField: "distance",
-                maxDistance: distance,
+                maxDistance: Number(distance),
                 spherical: true,
-            }
-        },
-        {
-            $match: filters
-        },
-        // { $limit: 10 },
-        { $sort: { distance: 1 } },
-    ]);
+            },
+        });
+    }
 
+    pipeline.push(
+        { $match: filters },
+        { $sort: distance ? { distance: 1 } : { createdAt: -1 } }
+    );
+
+    const products = await GYM.aggregate(pipeline);
     return products;
+};
+
+
+const allGyms = async (query: Record<string, any>) => {
+    const gymModel = new QueryBuilder(GYM.find().populate("user"), query)
+        .search(['name', 'description', "street", "state", "city", "phone", "email"])
+        .paginate()
+        .filter()
+        .sort();
+    const data: any = await gymModel.modelQuery;
+    const meta = await gymModel.countTotal();
+    return {
+        data,
+        meta,
+    };
 }
 
 export const gymService = {
@@ -263,5 +327,6 @@ export const gymService = {
     updateGym,
     nearMeMats,
     allMats,
-    GymDetails
+    GymDetails,
+    allGyms
 }

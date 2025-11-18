@@ -27,8 +27,12 @@ router.get("/",
     claimReqControler.allClaims);
 
 router.post("/approve/:id",
-    auth(USER_ROLE.user),
+    auth(USER_ROLE.admin),
     claimReqControler.ApproveClaimReq);
+
+router.post("/reject/:id",
+    auth(USER_ROLE.admin),
+    claimReqControler.RejectClaimReq);
 
 router.get("/stats",
     auth(USER_ROLE.admin),

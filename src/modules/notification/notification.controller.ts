@@ -59,8 +59,64 @@ const makeReadAll = catchAsync(async (req: Request, res: Response) => {
 
 })
 
+
+const deleteNotification = catchAsync(async (req: Request, res: Response) => {
+
+  const id = req.params.id;
+
+  const isNotification = await Notification.findOne({
+    _id: id,
+    receiver: req.user._id,
+  });
+
+  if (!isNotification) throw new AppError(httpStatus.NOT_FOUND, "Notification is not exist!");
+
+
+  if (isNotification?.receiver?.toString() != req.user._id.toString()) {
+    throw new AppError(httpStatus.FORBIDDEN, "You are not owner to this notification");
+  }
+
+  const result = await notificationServices.deleteNotification(id, req.user._id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Notifications deleted successfully",
+    data: result,
+  });
+
+})
+
+const dltAllNotification = catchAsync(async (req: Request, res: Response) => {
+
+  const result = await notificationServices.dltAllNotification(req.user._id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "All Notifications deleted successfully",
+    data: result,
+  });
+
+})
+const notificationUnReadCount = catchAsync(async (req: Request, res: Response) => {
+
+  const result = await notificationServices.notificationUnReadCount(req.user._id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Notifications unread count retrived successfully",
+    data: result,
+  });
+
+})
+
 export const notificationController = {
   getAllNotification,
   makeRead,
-  makeReadAll
+  makeReadAll,
+  deleteNotification,
+  dltAllNotification,
+  notificationUnReadCount
 };

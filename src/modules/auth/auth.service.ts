@@ -86,16 +86,14 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
         const tokenToUse = payload.fcmToken || user?.fcmToken;
 
         // Send notification if FCM token exists and user notification is unabled
-        if (user.notification) {
-            sendNotification(tokenToUse ? [tokenToUse] : [], {
-                title: `Login successfully`,
-                message: `New user login to your account`,
-                receiver: updatedUser._id,
-                receiverEmail: payload.email,
-                receiverRole: updatedUser.role,
-                sender: updatedUser._id,
-            });
-        }
+        sendNotification(tokenToUse ? [tokenToUse] : [], {
+            title: `Login successfully`,
+            message: `New user login to your account`,
+            receiver: updatedUser._id,
+            receiverEmail: payload.email,
+            receiverRole: updatedUser.role,
+            sender: updatedUser._id,
+        });
 
     }
 
@@ -195,7 +193,13 @@ const socialLogin = async ({ email, image, first_name }: { email: string, image:
             throw new AppError(httpStatus.FORBIDDEN, 'Your account is deleted');
         }
 
-        user = await User.findOneAndUpdate({ email }, { email, image, first_name, isverified: true, isSocialLogin: true }, { upsert: true, new: true }) as IUser;
+        const body: any = { email, first_name, isverified: true, isSocialLogin: true }
+
+        if (!user) {
+            body.image = image
+        }
+
+        user = await User.findOneAndUpdate({ email }, body, { upsert: true, new: true }) as IUser;
     }
 
     const userDoc = (user as any).toObject();
