@@ -13,7 +13,7 @@ const EventSchema: Schema<IEvent> = new Schema(
         registration_fee: { type: Number, default: 0 },
         event_website: { type: String, required: true },
         user: { type: Schema.Types.ObjectId, ref: "users", required: true },
-        gym: { type: Schema.Types.ObjectId, ref: "gyms", required: true },
+        gym: { type: Schema.Types.ObjectId, ref: "gyms" },
         image: {
             type: {
                 key: {

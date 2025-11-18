@@ -1,6 +1,7 @@
 import QueryBuilder from "../../builder/QueryBuilder";
 import AppError from "../../error/AppError";
 import { deleteFromS3 } from "../../utils/s3";
+import { User } from "../user/user.models";
 import { IEvent } from "./event.interface";
 import { Event } from "./event.model"
 import httpStatus from "http-status";
@@ -48,16 +49,19 @@ const deleteEvent = async (eventId: string, userId: string) => {
     return res;
 }
 
-const updateEvent = async (payload: IEvent, eventId: string, userId : string) => {
+const updateEvent = async (payload: IEvent, eventId: string, userId: string) => {
 
-    const exist = await Event.findById(eventId);
+    const exist = await Event.findById(eventId)
 
     if (!exist) {
         throw new AppError(httpStatus.NOT_FOUND, "Event not found");
     }
 
     if (exist.user.toString() !== userId) {
-        throw new AppError(httpStatus.BAD_REQUEST, "You are not owner this event");
+        const checkUserRole = await User.findById(userId);
+        if (checkUserRole?.role != "admin") {
+            throw new AppError(httpStatus.BAD_REQUEST, "You are not owner this event");
+        }
     }
 
     const { city, date, event_website, gym, image, name, registration_fee, state, venue } = payload

@@ -22,7 +22,7 @@ export const newEventAddValidator = [
         .withMessage('registration_fee is required')
         .isInt().withMessage("registration_fee should be number"),
 
-    body('gym').trim().not().isEmpty().withMessage('gym is required').isMongoId().withMessage("gym invalid"),
+    body('gym').trim().optional().isMongoId().withMessage("gym invalid"),
 
 ]
 
