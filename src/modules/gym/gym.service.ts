@@ -133,12 +133,13 @@ interface IIGym extends IGym {
 }
 
 const updateGym = async (payload: IIGym, gymId: string) => {
-    const { city, class_schedules, description, disciplines, email, facebook, instagram, location, mat_schedules, name, phone, state, street, website, zip_code, newImages = [] } = payload;
 
-    const matschedulesFormat = mat_schedules.map(i => {
+    const { city, class_schedules, description, disciplines, email, facebook, instagram, location, mat_schedules, name, phone, state, street, website, zip_code, images } = payload;
+
+    const matschedulesFormat = mat_schedules?.map(i => {
         return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
     })
-    const classchedulesFormat = class_schedules.map(i => {
+    const classchedulesFormat = class_schedules?.map(i => {
         return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name }
     })
 
@@ -146,7 +147,7 @@ const updateGym = async (payload: IIGym, gymId: string) => {
         ? { type: 'Point', coordinates: location.coordinates }
         : undefined;
 
-    const updateFields: Partial<IGym> = { city, class_schedules: classchedulesFormat, description, disciplines, email, facebook, instagram, location: formattedLocation, mat_schedules: matschedulesFormat, name, phone, state, street, website, zip_code };
+    const updateFields: Partial<IGym> = { city, class_schedules: classchedulesFormat, description, disciplines, email, facebook, instagram, location: formattedLocation, mat_schedules: matschedulesFormat, name, phone, state, street, website, zip_code, images };
 
     // Remove undefined or null fields to prevent overwriting existing values with null
     Object.keys(updateFields).forEach((key) => {
@@ -165,9 +166,10 @@ const updateGym = async (payload: IIGym, gymId: string) => {
     const updateQuery: any = { $set: updateFields };
 
     // If new images exist, append them
-    if (newImages?.length) {
-        updateQuery.$push = { images: { $each: newImages } };
-    }
+
+    updateQuery.images = images?.length ? images : undefined
+
+    // console.log(updateFields)
 
     const result = await GYM.updateOne({ _id: gymId }, updateQuery)
 

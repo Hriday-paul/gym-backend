@@ -120,11 +120,11 @@ const deleteGymImage = catchAsync(async (req, res) => {
 const updateGym = catchAsync(async (req, res) => {
 
     //check you are a owner
-    const exist = await GYM.findById(req.params.id)
+    // const exist = await GYM.findById(req.params.id)
 
-    if (exist?.user.toString() !== req.user?._id) {
-        throw new AppError(httpStatus.BAD_REQUEST, "You are not owner this gym")
-    }
+    // if (exist?.user.toString() !== req.user?._id) {
+    //     throw new AppError(httpStatus.BAD_REQUEST, "You are not owner this gym")
+    // }
 
     const files = req.files as Express.Multer.File[];
 
@@ -139,7 +139,7 @@ const updateGym = catchAsync(async (req, res) => {
         });
 
         const urls = await uploadManyToS3(imgsArray);
-        req.body.newImages = urls;
+        req.body.images = urls;
     }
 
     const result = await gymService.updateGym(req.body, req.params.id);
