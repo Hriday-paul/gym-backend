@@ -1,4 +1,4 @@
-# IOT Backend
+# GYM application Backend
 =======
 # Setup -- TypeScript x Express x Node.js
 
