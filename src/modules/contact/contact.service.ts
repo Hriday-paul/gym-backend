@@ -12,9 +12,12 @@ import config from '../../config';
 const createContact = async (payload: Icontact) => {
 
   const emailPath = path.join(
-    __dirname,
-    '../../../public/view/supportEmail.html',
-  );
+  process.cwd(),
+  'public',
+  'view',
+  'supportEmail.html'
+);
+
   // If 'isApproved' is set to true, send an email
   await sendEmail(
     config.nodemailer_host_email!,

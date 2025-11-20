@@ -118,9 +118,11 @@ const resendOtp = async (email: string) => {
     expiresIn: '3m',
   });
 
-  const otpEmailPath = path.join(
-    __dirname,
-    '../../public/view/otp_mail.html',
+    const otpEmailPath = path.join(
+    process.cwd(),
+    'public',
+    'view',
+    'otp_mail.html'
   );
 
   if (user) {

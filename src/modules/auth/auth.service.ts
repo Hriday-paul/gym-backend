@@ -298,8 +298,10 @@ const forgotPassword = async (email: string) => {
     });
 
     const otpEmailPath = path.join(
-        __dirname,
-        '../../public/view/forgot_pass_mail.html',
+        process.cwd(),
+        'public',
+        'view',
+        'forgot_pass_mail.html'
     );
 
     await sendEmail(
