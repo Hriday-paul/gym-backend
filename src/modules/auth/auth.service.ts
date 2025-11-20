@@ -82,19 +82,6 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
             ) as IUser;
         }
 
-        // Choose the most up-to-date FCM token to use
-        const tokenToUse = payload.fcmToken || user?.fcmToken;
-
-        // Send notification if FCM token exists and user notification is unabled
-        sendNotification(tokenToUse ? [tokenToUse] : [], {
-            title: `Login successfully`,
-            message: `New user login to your account`,
-            receiver: updatedUser._id,
-            receiverEmail: payload.email,
-            receiverRole: updatedUser.role,
-            sender: updatedUser._id,
-        });
-
     }
 
     const userDoc = (user as any).toObject();
@@ -265,6 +252,18 @@ const changePassword = async (id: string, payload: { oldPassword: string, newPas
             },
         }
     );
+
+    // Send notification if FCM token exists and user notification is unabled
+    const tokenToUse = (user?.fcmToken && user?.notification) ? [user?.fcmToken] : [];
+
+    sendNotification(tokenToUse, {
+        title: `Password Changed`,
+        message: `Your account password was changed`,
+        receiver: user._id,
+        receiverEmail: user.email,
+        receiverRole: user.role,
+        sender: user._id,
+    });
 
     return result;
 };

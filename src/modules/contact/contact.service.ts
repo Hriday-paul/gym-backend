@@ -27,6 +27,7 @@ const createContact = async (payload: Icontact) => {
   );
 
   const contacts = await Contact.create(payload);
+  
 
   if (!contacts) {
     throw new AppError(

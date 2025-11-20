@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { ObjectId } from "mongoose";
 import {ObjectId as mongoId} from "mongodb"
 
 

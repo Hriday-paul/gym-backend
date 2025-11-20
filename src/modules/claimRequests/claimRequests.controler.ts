@@ -5,6 +5,7 @@ import { uploadToS3 } from "../../utils/s3";
 import sendResponse from "../../utils/sendResponse";
 import { claimReqService } from "./claimRequests.service";
 import httpStatus from "http-status"
+import { sendAdminNotifications } from "../notification/notification.send.admin";
 
 export const AddclaimReq = catchAsync(async (req, res) => {
 
@@ -47,6 +48,13 @@ export const AddclaimReq = catchAsync(async (req, res) => {
 
     // save to DB
     const result = await claimReqService.AddclaimReq(req.body);
+
+    //send notification to admin
+    sendAdminNotifications({
+        title: "User requested a gym for claim",
+        message: "A user has requested to add a new gym for their claim. Please review the request.",
+        sender: req.user?._id as any,
+    })
 
     sendResponse(res, {
         statusCode: httpStatus.OK,

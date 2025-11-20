@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ObjectId } from "mongoose";
+import {ObjectId as mongoId} from "mongodb"
 import { sendNotification } from "./notification.utils";
 import { User } from "../user/user.models";
 
 export interface IAdminSendNotificationPayload {
-  sender: ObjectId;
+  sender: mongoId;
   type?: "text" | "accept" | "reject" | "cancelled" | "payment" | "product";
   title: string;
   message: string;
@@ -24,7 +24,7 @@ export const sendAdminNotifications = async (
     return;
   }
 
-  const fcmToken = admin?.fcmToken ? [admin?.fcmToken] : []
+  const fcmToken = (admin?.fcmToken && admin?.notification) ? [admin?.fcmToken] : []
 
   sendNotification(fcmToken, {
     sender: payload.sender,

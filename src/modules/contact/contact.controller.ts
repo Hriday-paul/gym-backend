@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import { contactService } from './contact.service';
 import sendResponse from '../../utils/sendResponse';
+import { sendAdminNotifications } from '../notification/notification.send.admin';
 
 const createcontact = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?._id;
@@ -9,6 +10,14 @@ const createcontact = catchAsync(async (req: Request, res: Response) => {
 
   // console.log('======', req.body);
   const result = await contactService.createContact(req.body);
+
+  //send notification to admin
+  sendAdminNotifications({
+    title: "New Support Message",
+    message: "A user has sent a new support message. Please review and respond.",
+    sender: req.user?._id as any,
+  });
+
   sendResponse(res, {
     statusCode: 200,
     success: true,

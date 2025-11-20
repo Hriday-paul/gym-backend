@@ -4,7 +4,7 @@ import sendResponse from "../../utils/sendResponse";
 import httpStatus from "http-status"
 import AppError from "../../error/AppError";
 import { uploadManyToS3 } from "../../utils/s3";
-import { GYM } from "./gym.model";
+import { sendAdminNotifications } from "../notification/notification.send.admin";
 
 //add gym by admin
 const AddGymByAdmin = catchAsync(async (req, res) => {
@@ -31,7 +31,15 @@ const AddGymByAdmin = catchAsync(async (req, res) => {
         }
     }
 
-    const result = await gymService.AddGymByAdmin(req.body, req.user._id)
+    const result = await gymService.AddGymByAdmin(req.body, req.user._id);
+
+    //send notification to admin
+    sendAdminNotifications({
+        title: "New Gym Added by you to your application",
+        message: "A new gym has been successfully added to your application.",
+        sender: req.user?._id as any,
+    });
+
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
