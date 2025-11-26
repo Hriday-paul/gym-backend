@@ -163,7 +163,7 @@ const adminLogin = async (payload: { email: string, password: string }) => {
 };
 
 
-const socialLogin = async ({ email, image, first_name }: { email: string, image: string, first_name: string }) => {
+const socialLogin = async ({ email, image, first_name }: { email: string, image ?: string, first_name: string }) => {
 
     let user: IUser | null = await User.findOne({ email: email, role: { $ne: "admin" } });
 

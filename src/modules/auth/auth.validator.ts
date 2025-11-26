@@ -15,7 +15,7 @@ export const loginAccountValidator = [
 
 export const social_loginAccountValidator = [
     check('email').trim().not().isEmpty().withMessage('Email is required').isEmail().normalizeEmail({ all_lowercase: true }).withMessage('Invalid Email'),
-    check('image').trim().not().isEmpty().withMessage('image is required').isString(),
+    // check('image').trim().not().isEmpty().withMessage('image is required').isString(),
     check('first_name').trim().not().isEmpty().withMessage('first_name is required').isString(),
 ]
 
