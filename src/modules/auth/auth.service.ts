@@ -46,7 +46,7 @@ const createUser = async (payload: IUser) => {
 // Login
 const loginUser = async (payload: { email: string, password: string, fcmToken?: string }) => {
 
-    const user: IUser | null = await User.findOne({ email: payload?.email, role: { $nin: "admin" } });
+    const user: IUser | null = await User.findOne({ email: payload?.email, role: { $ne: "admin" } });
 
     if (!user) {
         // If user not found, throw error
@@ -216,7 +216,6 @@ const socialLogin = async ({ email, image, first_name }: { email: string, image 
         refreshToken,
     };
 };
-
 
 
 // Change password
