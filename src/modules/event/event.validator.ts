@@ -15,8 +15,8 @@ export const newEventAddValidator = [
 
     body('date').trim().not().isEmpty().withMessage('date is required').isISO8601().toDate().withMessage('Invalid date format'),
 
-    body("event_website").trim().notEmpty()
-        .withMessage('event_website is required'),
+    // body("event_website").trim().notEmpty()
+    //     .withMessage('event_website is required'),
 
     body("registration_fee").trim().notEmpty()
         .withMessage('registration_fee is required')

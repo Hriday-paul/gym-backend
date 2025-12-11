@@ -11,7 +11,7 @@ const EventSchema: Schema<IEvent> = new Schema(
         date: { type: Date, required: true },
         duration: { type: String },
         registration_fee: { type: Number, default: 0 },
-        event_website: { type: String, required: true },
+        event_website: { type: String },
         user: { type: Schema.Types.ObjectId, ref: "users", required: true },
         gym: { type: Schema.Types.ObjectId, ref: "gyms" },
         image: {
