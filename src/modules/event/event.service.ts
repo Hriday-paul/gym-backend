@@ -26,7 +26,7 @@ const addEvent = async (payload: IEvent) => {
 }
 
 const myEvents = async (userId: string) => {
-    const res = await Event.find({ user: userId });
+    const res = await Event.find({ user: userId }).sort("-createdAt");
     return res;
 }
 
