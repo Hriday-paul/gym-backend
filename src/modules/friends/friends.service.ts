@@ -40,7 +40,8 @@ const MyFriends = async (query: Record<string, any>, userId: string) => {
                 "friend.notification": 0,
                 "friend.status": 0
             }
-        }
+        },
+        { $sort: { createdAt: -1 } }
     ]);
 
     return res;

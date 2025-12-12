@@ -39,7 +39,7 @@ const deletefavourite = async (gym: string, user: string) => {
 
 const getAllMyFavourites = async (user: string) => {
 
-    const favorites = await Favorites.find({ user }).populate("gym")
+    const favorites = await Favorites.find({ user }).sort("-createdAt").populate("gym")
 
     return favorites
 }

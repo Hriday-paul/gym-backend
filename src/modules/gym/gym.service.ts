@@ -65,7 +65,7 @@ const AddGymByUser = async (payload: IGym, userId: string) => {
 }
 
 const MyGyms = async (userId: string) => {
-    const res = await GYM.find({ user: userId });
+    const res = await GYM.find({ user: userId }).sort("-createdAt");
     return res;
 }
 
