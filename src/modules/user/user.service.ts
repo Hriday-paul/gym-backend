@@ -4,6 +4,7 @@ import AppError from "../../error/AppError";
 import { ICompetitionResult, IUser } from "./user.interface";
 import { User } from "./user.models";
 import httpStatus from 'http-status'
+import { Competition } from "../competition/competition.model";
 
 
 const updateProfile = async (payload: IUser, userId: string, image: string) => {
@@ -135,7 +136,22 @@ const getUserById = async (id: string) => {
         notification: 0,
         status: 0,
     });
-    return result;
+
+    const res = result ? result.toObject() : result;
+
+    const lastCompetition = await Competition.findOne({ user: id })
+        .sort({ createdAt: -1 });
+
+    interface IUserWithCompetition extends IUser {
+        competition?: ICompetitionResult | null;
+    }
+
+    if (res) {
+        (res as IUserWithCompetition).competition = lastCompetition
+
+    }
+
+    return res;
 };
 
 //user status update

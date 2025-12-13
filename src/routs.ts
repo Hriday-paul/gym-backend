@@ -10,6 +10,7 @@ import { notificationRoute } from './modules/notification/notification.routes';
 import { claimReqRouts } from './modules/claimRequests/claimRequests.rout';
 import { dashboardRouts } from './modules/dasboard/dashboard.rout';
 import { favouriteRouts } from './modules/favourites/favourites.rout';
+import { competitionRouts } from './modules/competition/competition.rout';
 
 const router = express.Router();
 
@@ -57,6 +58,10 @@ const moduleRoutes = [
     {
         path: '/save',
         route: favouriteRouts,
+    },
+    {
+        path: '/competitions',
+        route: competitionRouts,
     },
 ];
 moduleRoutes.forEach(route => router.use(route.path, route.route));

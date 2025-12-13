@@ -117,11 +117,6 @@ const userSchema: Schema<IUser> = new Schema(
       default: null
     },
 
-    competition: {
-      type: CompetitionSchema,
-      default: null
-    },
-
     location: {
       type: {
         type: String,

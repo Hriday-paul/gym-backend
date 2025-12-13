@@ -38,8 +38,6 @@ export interface IUser {
   isSocialLogin: boolean
   isDeleted: boolean,
 
-  competition : ICompetitionResult
-
   location : {type : string, coordinates : [number, number]},
 
   fcmToken : string
