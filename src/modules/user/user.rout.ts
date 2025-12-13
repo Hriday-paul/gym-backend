@@ -34,14 +34,6 @@ router.patch(
     userController.update_user_status,
 );
 
-router.post(
-    '/competition',
-    competitionAddValidator,
-    req_validator(),
-    auth(USER_ROLE.user),
-    userController.AddRecentCompetition,
-);
-
 router.get(
     '/my-profile',
     auth(USER_ROLE.admin, USER_ROLE.user),
