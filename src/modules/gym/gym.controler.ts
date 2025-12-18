@@ -3,7 +3,7 @@ import { gymService } from "./gym.service";
 import sendResponse from "../../utils/sendResponse";
 import httpStatus from "http-status"
 import AppError from "../../error/AppError";
-import { uploadManyToS3 } from "../../utils/s3";
+import { uploadManyToS3, uploadToS3 } from "../../utils/s3";
 import { sendAdminNotifications } from "../notification/notification.send.admin";
 
 //add gym by admin
@@ -50,12 +50,44 @@ const AddGymByAdmin = catchAsync(async (req, res) => {
 
 //add gym by user
 const AddGymByUser = catchAsync(async (req, res) => {
-    const files = req.files as Express.Multer.File[];
+
+    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+
+    if (!files)
+        throw new AppError(httpStatus.BAD_REQUEST, "Files are missing from request");
+
+    // required fields
+    const requiredDocs = ["utility_bill", "business_license", "tax_document"];
+
+    // collect missing fields
+    const missing = requiredDocs.filter((f) => !files[f]);
+    if (missing.length > 0) throw new AppError(httpStatus.BAD_REQUEST, `Missing files: ${missing.join(", ")}`);
+
+    // Upload all files in parallel
+    const uploads = await Promise.all(
+        requiredDocs.map(async (field) => {
+            const file = files[field][0];
+            const uploaded = await uploadToS3({
+                file,
+                fileName: `images/files/${Math.floor(100000 + Math.random() * 900000)}`,
+            });
+            return { field, url: uploaded };
+        })
+    );
+
+    const claimReqs : any = {};
+
+    // attach uploaded file URLs
+    uploads.forEach(({ field, url }) => {
+        claimReqs[field] = url;
+    });
+
+    //----------------------------------------------------------------------------
 
     if (files) {
         const imgsArray: { file: any; path: string; key?: string }[] = [];
 
-        files?.map(image => {
+        files?.images?.map(image => {
             imgsArray.push({
                 file: image,
                 path: `images/gym/images`,
@@ -73,11 +105,11 @@ const AddGymByUser = catchAsync(async (req, res) => {
         }
     }
 
-    const result = await gymService.AddGymByUser(req.body, req.user._id)
+    const result = await gymService.AddGymByUser(req.body, req.user._id, claimReqs)
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'New Gym Added Successfully',
+        message: 'New Gym Requested Successfully',
         data: result,
     });
 })
@@ -183,6 +215,8 @@ const allMats = catchAsync(async (req, res) => {
 })
 
 const allGyms = catchAsync(async (req, res) => {
+
+    req.query.status = "approved";
 
     const result = await gymService.allGyms(req.query)
     sendResponse(res, {

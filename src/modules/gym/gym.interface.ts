@@ -24,5 +24,7 @@ export interface IGym {
 
     user: ObjectId,
 
-    location: { type: string, coordinates: number[] }
+    location: { type: string, coordinates: number[] },
+
+    status : "approved" | "rejected" | "pending"
 }

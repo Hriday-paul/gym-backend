@@ -12,7 +12,12 @@ const router = Router();
 router.post(
     '/',
     auth(USER_ROLE.user),
-    image_Upload.array('images'),
+    image_Upload.fields([
+         { name: "utility_bill", maxCount : 1 },
+        { name: "business_license", maxCount : 1 },
+        { name: "tax_document", maxCount : 1 },
+        { name: "images" },
+    ]),
     parseData(),
     gymAddValidator,
     req_validator(),

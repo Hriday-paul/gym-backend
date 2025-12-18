@@ -15,7 +15,7 @@ const ClassScheduleSchema = new Schema<IClsSchedule>({
     from_view: { type: String, required: true },
     to: { type: Number, required: true },
     to_view: { type: String, required: true },
-    name : {type : String, default : null}
+    name: { type: String, default: null }
 });
 
 const GymSchema = new Schema<IGym>(
@@ -100,6 +100,12 @@ const GymSchema = new Schema<IGym>(
                 required: true,
             },
         },
+
+        status: {
+            enum: ["approved", "rejected", "pending"],
+            type: String, default: "pending"
+        }
+
     },
     { timestamps: true }
 );

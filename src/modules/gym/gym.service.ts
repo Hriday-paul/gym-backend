@@ -9,6 +9,9 @@ import httpStatus from "http-status"
 import { Favorites } from "../favourites/favourites.model";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { sendNotification } from "../notification/notification.utils";
+import { startSession } from "mongoose";
+import { IClaimReq } from "../claimRequests/claimRequests.interface";
+import { ClaimReq } from "../claimRequests/claimRequests.model";
 
 export const muniteNumber_to_time = (minute: number) => {
     const hour = Math.floor(minute / 60);
@@ -29,43 +32,58 @@ const AddGymByAdmin = async (payload: IGym, userId: string) => {
         return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
     })
 
-    const res = await GYM.create({ ...payload, isClaimed: false, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat });
+    const res = await GYM.create({ ...payload, isClaimed: false, user: userId, mat_schedules: matschedulesFormat, status : "approved", class_schedules: classchedulesFormat });
     return res;
 }
 
-const AddGymByUser = async (payload: IGym, userId: string) => {
+const AddGymByUser = async (payload: IGym, userId: string, claimPayload : IClaimReq) => {
 
-    const user = await User.findById(userId);
+    const session = await startSession();
 
-    if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, "User not found")
+    try {
+        session.startTransaction();
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            throw new AppError(httpStatus.NOT_FOUND, "User not found")
+        }
+
+        const matschedulesFormat = payload.mat_schedules.map(i => {
+            return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
+        })
+        const classchedulesFormat = payload.class_schedules.map(i => {
+            return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
+        })
+
+        const gym = await GYM.create({ ...payload, isClaimed: true, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat });
+
+        const claimRequest = await ClaimReq.create({...claimPayload, user : user?._id, email : gym?.email, phone : gym?.phone, gym : gym?._id});
+
+        const tokenToUse = user?.fcmToken;
+
+        sendNotification(tokenToUse ? [tokenToUse] : [], {
+            title: `New Gym under review`,
+            message: `Your Gym will review by admin and they will approve it`,
+            receiver: user?._id,
+            receiverEmail: payload.email,
+            receiverRole: user.role,
+            sender: user._id,
+        });
+
+        await session.commitTransaction();
+        return gym;
+
+    } catch (error: any) {
+        await session.abortTransaction();
+        throw new AppError(httpStatus.BAD_GATEWAY, error.message);
+    } finally {
+        session.endSession();
     }
-
-    const matschedulesFormat = payload.mat_schedules.map(i => {
-        return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
-    })
-    const classchedulesFormat = payload.class_schedules.map(i => {
-        return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
-    })
-
-    const res = await GYM.create({ ...payload, isClaimed: true, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat });
-
-    const tokenToUse = user?.fcmToken;
-
-    sendNotification(tokenToUse ? [tokenToUse] : [], {
-        title: `Gym Added`,
-        message: `New Gym added successfully to your account`,
-        receiver: user?._id,
-        receiverEmail: payload.email,
-        receiverRole: user.role,
-        sender: user._id,
-    });
-
-    return res;
 }
 
 const MyGyms = async (userId: string) => {
-    const res = await GYM.find({ user: userId }).sort("-createdAt");
+    const res = await GYM.find({ user: userId, status : "approved" }).sort("-createdAt");
     return res;
 }
 
@@ -124,6 +142,7 @@ const DeleteGym = async (userId: string, gymId: string) => {
 
     await Favorites.deleteMany({ gym: gymId })
     const res = await GYM.deleteOne({ _id: gymId });
+    await ClaimReq.deleteOne({ gym : gymId, user : userId });
 
     return res;
 }
@@ -211,7 +230,8 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
 
     const filters: any = {
         $and: [
-            { "mat_schedules.day": day },
+            {"mat_schedules.day": day },
+            {status : "approved"},
             {
                 $or: [
                     {
@@ -235,7 +255,7 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
         coordinates: [Number(long), Number(lat)], // [longitude, latitude]
     };
 
-    const products = await GYM.aggregate([
+    const gyms = await GYM.aggregate([
         {
             $geoNear: {
                 near: userLocation,
@@ -251,7 +271,7 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
         { $sort: { distance: 1 } },
     ]);
 
-    return products;
+    return gyms;
 }
 
 const allMats = async (query: Record<string, any>, userId: string) => {
@@ -269,6 +289,7 @@ const allMats = async (query: Record<string, any>, userId: string) => {
             { state: { $regex: search, $options: "i" } },
             { city: { $regex: search, $options: "i" } },
         ],
+        status : "approved"
     };
 
     if (disciplines.length > 0) {
