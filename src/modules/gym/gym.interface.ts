@@ -10,6 +10,7 @@ export interface IGym {
     street: string,
     state: string,
     city: string,
+    apartment: string,
     zip_code: string,
     phone: string,
     email: string,

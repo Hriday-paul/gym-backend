@@ -89,6 +89,8 @@ export const gymAddValidator = [
     // validate each item in the coordinates array is a float
     check("location.coordinates.*")
         .isFloat().withMessage("each coordinate must be a number"),
+
+    check('apartment').trim().not().isEmpty().withMessage('apartment is required'),
 ]
 
 export const deleteGymImageValidator = [

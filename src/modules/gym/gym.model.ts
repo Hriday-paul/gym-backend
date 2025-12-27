@@ -44,6 +44,10 @@ const GymSchema = new Schema<IGym>(
             type: String,
             required: true,
         },
+        apartment: {
+            type: String,
+            required: true,
+        },
         city: {
             type: String,
             required: true,
