@@ -114,7 +114,6 @@ const AddGymByUser = catchAsync(async (req, res) => {
     });
 })
 
-
 const MyGyms = catchAsync(async (req, res) => {
     const result = await gymService.MyGyms(req.user._id)
     sendResponse(res, {
