@@ -166,7 +166,7 @@ const updateGym = async (payload: IIGym, gymId: string) => {
         ? { type: 'Point', coordinates: location.coordinates }
         : undefined;
 
-    const updateFields: Partial<IGym> = { city, class_schedules: classchedulesFormat, description, disciplines, email, facebook, instagram, location: formattedLocation, mat_schedules: matschedulesFormat, name, phone, state, street, website, zip_code, images, apartment };
+    const updateFields: Partial<IGym> = { city, class_schedules: classchedulesFormat, description, disciplines, email, facebook, instagram, location: formattedLocation, mat_schedules: matschedulesFormat, name, phone, state, street, website, zip_code, apartment };
 
     // Remove undefined or null fields to prevent overwriting existing values with null
     Object.keys(updateFields).forEach((key) => {
@@ -175,7 +175,7 @@ const updateGym = async (payload: IIGym, gymId: string) => {
         }
     });
 
-    if (Object.keys(updateFields).length === 0) {
+    if (Object.keys(updateFields).length === 0 && images?.length == 0) {
         throw new AppError(
             httpstatus.NOT_FOUND,
             'No valid field found',
@@ -191,8 +191,6 @@ const updateGym = async (payload: IIGym, gymId: string) => {
             images: { $each: images },
         };
     }
-
-    // console.log(updateFields)
 
     const result = await GYM.updateOne({ _id: gymId }, updateQuery)
 
