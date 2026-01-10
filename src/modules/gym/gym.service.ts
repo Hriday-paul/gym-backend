@@ -32,11 +32,11 @@ const AddGymByAdmin = async (payload: IGym, userId: string) => {
         return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
     })
 
-    const res = await GYM.create({ ...payload, isClaimed: false, user: userId, mat_schedules: matschedulesFormat, status : "approved", class_schedules: classchedulesFormat });
+    const res = await GYM.create({ ...payload, isClaimed: false, user: userId, mat_schedules: matschedulesFormat, status: "approved", class_schedules: classchedulesFormat });
     return res;
 }
 
-const AddGymByUser = async (payload: IGym, userId: string, claimPayload : IClaimReq) => {
+const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimReq) => {
 
     const session = await startSession();
 
@@ -58,7 +58,7 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload : IClaim
 
         const gym = await GYM.create({ ...payload, isClaimed: true, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat });
 
-        const claimRequest = await ClaimReq.create({...claimPayload, user : user?._id, email : gym?.email, phone : gym?.phone, gym : gym?._id});
+        const claimRequest = await ClaimReq.create({ ...claimPayload, user: user?._id, email: gym?.email, phone: gym?.phone, gym: gym?._id });
 
         const tokenToUse = user?.fcmToken;
 
@@ -83,7 +83,7 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload : IClaim
 }
 
 const MyGyms = async (userId: string) => {
-    const res = await GYM.find({ user: userId, status : "approved" }).sort("-createdAt");
+    const res = await GYM.find({ user: userId, status: "approved" }).sort("-createdAt");
     return res;
 }
 
@@ -142,7 +142,7 @@ const DeleteGym = async (userId: string, gymId: string) => {
 
     await Favorites.deleteMany({ gym: gymId })
     const res = await GYM.deleteOne({ _id: gymId });
-    await ClaimReq.deleteOne({ gym : gymId, user : userId });
+    await ClaimReq.deleteOne({ gym: gymId, user: userId });
 
     return res;
 }
@@ -182,11 +182,15 @@ const updateGym = async (payload: IIGym, gymId: string) => {
         );
     }
 
-    const updateQuery: any = { $set: updateFields };
+    const updateQuery: any = {
+        $set: updateFields,
+    };
 
-    // If new images exist, append them
-
-    updateQuery.images = images?.length ? images : undefined
+    if (images?.length) {
+        updateQuery.$push = {
+            images: { $each: images },
+        };
+    }
 
     // console.log(updateFields)
 
@@ -230,8 +234,8 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
 
     const filters: any = {
         $and: [
-            {"mat_schedules.day": day },
-            {status : "approved"},
+            { "mat_schedules.day": day },
+            { status: "approved" },
             {
                 $or: [
                     {
@@ -289,7 +293,7 @@ const allMats = async (query: Record<string, any>, userId: string) => {
             { state: { $regex: search, $options: "i" } },
             { city: { $regex: search, $options: "i" } },
         ],
-        status : "approved"
+        status: "approved"
     };
 
     if (disciplines.length > 0) {

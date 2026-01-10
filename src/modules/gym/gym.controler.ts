@@ -5,6 +5,8 @@ import httpStatus from "http-status"
 import AppError from "../../error/AppError";
 import { uploadManyToS3, uploadToS3 } from "../../utils/s3";
 import { sendAdminNotifications } from "../notification/notification.send.admin";
+import { GYM } from "./gym.model";
+import { USER_ROLE } from "../user/user.constants";
 
 //add gym by admin
 const AddGymByAdmin = catchAsync(async (req, res) => {
@@ -159,11 +161,11 @@ const deleteGymImage = catchAsync(async (req, res) => {
 const updateGym = catchAsync(async (req, res) => {
 
     //check you are a owner
-    // const exist = await GYM.findById(req.params.id)
+    const exist = await GYM.findById(req.params.id)
 
-    // if (exist?.user.toString() !== req.user?._id) {
-    //     throw new AppError(httpStatus.BAD_REQUEST, "You are not owner this gym")
-    // }
+    if (exist?.user.toString() !== req.user?._id && req.user?.role !== USER_ROLE.admin) {
+        throw new AppError(httpStatus.BAD_REQUEST, "You are not allowed to process this gym")
+    }
 
     const files = req.files as Express.Multer.File[];
 
