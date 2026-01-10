@@ -160,12 +160,12 @@ const deleteGymImage = catchAsync(async (req, res) => {
 
 const updateGym = catchAsync(async (req, res) => {
 
-    //check you are a owner
-    // const exist = await GYM.findById(req.params.id)
+    // check you are a owner
+    const exist = await GYM.findById(req.params.id)
 
-    // if (exist?.user.toString() !== req.user?._id && req.user?.role !== USER_ROLE.admin) {
-    //     throw new AppError(httpStatus.BAD_REQUEST, "You are not allowed to process this gym")
-    // }
+    if (exist?.user.toString() !== req.user?._id && req.user?.role !== USER_ROLE.admin) {
+        throw new AppError(httpStatus.BAD_REQUEST, "You are not allowed to process this gym")
+    }
 
     const files = req.files as Express.Multer.File[];
 
