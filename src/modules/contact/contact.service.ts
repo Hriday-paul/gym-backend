@@ -60,7 +60,7 @@ const replyContact = async (id: string, message: string) => {
   // If 'isApproved' is set to true, send an email
   await sendEmail(
     contact?.email,
-    'Support Reply from Forager',
+    'Support Reply from Jiu Jitsu App',
     fs
       .readFileSync(emailPath, 'utf8')
       .replace('{{customer_name}}', contact?.name)
