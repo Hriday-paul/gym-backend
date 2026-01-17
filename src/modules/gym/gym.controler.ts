@@ -228,17 +228,6 @@ const allGyms = catchAsync(async (req, res) => {
     });
 })
 
-const AllMats = catchAsync(async (req, res) => {
-
-    const result = await gymService.AllMats(req.query)
-    sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message: 'All mats retrived successfully',
-        data: result,
-    });
-})
-
 export const gymControler = {
     AddGymByAdmin,
     AddGymByUser,
@@ -249,6 +238,5 @@ export const gymControler = {
     nearMeMats,
     allGymsForApp,
     GymDetails,
-    allGyms,
-    AllMats
+    allGyms
 }

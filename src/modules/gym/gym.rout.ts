@@ -46,13 +46,6 @@ router.get("/list",
     gymControler.allGymsForApp
 )
 
-router.get("/mats",
-    allMatsvalidator,
-    req_validator(),
-    auth(USER_ROLE.user),
-    gymControler.AllMats
-)
-
 router.get("/mats/near-me",
     nearGymValidator,
     req_validator(),

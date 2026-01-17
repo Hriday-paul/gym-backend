@@ -232,26 +232,44 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
 
     const SIX_HOURS = 6 * 60;
 
-    console.log(current + SIX_HOURS, current);
+    // const filters: any = {
+    //     $and: [
+    //         { "mat_schedules.day": day },
+    //         { status: "approved" },
+    //         {
+    //             $or: [
+    //                 {
+    //                     $and: [
+    //                         { "mat_schedules.from": { $lte: current } },
+    //                         { "mat_schedules.to": { $gte: current } }
+    //                     ]
+    //                 },
+    //                 {
+    //                     "mat_schedules.from": { $gt: current, $lte: current + SIX_HOURS },
+    //                 },
+    //             ]
+    //         }
+    //     ]
+    // };
 
-    const filters: any = {
-        $and: [
-            { "mat_schedules.day": day },
-            { status: "approved" },
-            {
+    const filters = {
+        status: "approved",
+        mat_schedules: {
+            $elemMatch: {
+                day,
                 $or: [
+                    // currently open
                     {
-                        $and: [
-                            { "mat_schedules.from": { $lte: current } },
-                            { "mat_schedules.to": { $gte: current } }
-                        ]
+                        from: { $lte: current },
+                        to: { $gte: current },
                     },
+                    // starts within next 6 hours
                     {
                         from: { $gt: current, $lte: current + SIX_HOURS },
                     },
-                ]
-            }
-        ]
+                ],
+            },
+        },
     };
 
     if (!lat || !long) {
@@ -307,7 +325,7 @@ const allGymsForApp = async (query: Record<string, any>, userId: string) => {
     const pipeline: any[] = [];
 
     // Add geoNear if distance, long, lat query is present
-    if (distance && long && lat) {
+    if (long && lat) {
         const cordinates = [Number(long), Number(lat)]
 
         const userLocation = {
@@ -319,7 +337,7 @@ const allGymsForApp = async (query: Record<string, any>, userId: string) => {
             $geoNear: {
                 near: userLocation,
                 distanceField: "distance",
-                maxDistance: Number(distance),
+                maxDistance: distance ? Number(distance) : 50000, // default 50 km
                 spherical: true,
             },
         });
@@ -349,36 +367,6 @@ const allGyms = async (query: Record<string, any>) => {
     };
 }
 
-const AllMats = async (query: Record<string, any>) => {
-
-    // const gyms = await GYM.find(
-    //     { class_schedules: { $ne: [] } },
-    //     // { name: 1, class_schedules: 1 }
-    // );
-
-    const allClassSchedules = await GYM.aggregate([
-        { $unwind: "$mat_schedules" },
-        {
-            $project: {
-                _id: 0,
-                gymId: "$_id",
-                gymName: "$name",
-                gymImages: "$images",
-                ...{
-                    day: "$mat_schedules.day",
-                    from: "$mat_schedules.from",
-                    from_view: "$mat_schedules.from_view",
-                    to: "$mat_schedules.to",
-                    to_view: "$mat_schedules.to_view",
-                },
-            },
-        },
-    ]);
-
-    return allClassSchedules;
-
-}
-
 export const gymService = {
     AddGymByAdmin,
     AddGymByUser,
@@ -390,5 +378,4 @@ export const gymService = {
     allGymsForApp,
     GymDetails,
     allGyms,
-    AllMats
 }
