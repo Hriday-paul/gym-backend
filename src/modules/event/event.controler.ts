@@ -23,7 +23,7 @@ const addEvent = catchAsync(async (req, res) => {
         const gym = await GYM.findById(req.body.gym);
 
         if (gym?.user.toString() !== req.user?._id) {
-            throw new AppError(httpStatus.BAD_REQUEST, "You are not owner this selected gym")
+            throw new AppError(httpStatus.BAD_REQUEST, "You’re not the owner of this gym!")
         }
     }
 
@@ -48,7 +48,7 @@ const addEvent = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'New event added successfully',
+        message: 'New event successfully added!',
         data: result,
     });
 })
@@ -63,11 +63,11 @@ const myEvents = catchAsync(async (req, res) => {
     });
 })
 const deleteEvent = catchAsync(async (req, res) => {
-    const result = await eventService.deleteEvent(req.params.id, req.user?._id)
+    const result = await eventService.deleteEvent(req.params.id, req.user?._id, req?.user?.role)
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Event Deleted Successfully',
+        message: 'Event successfully deleted!',
         data: result,
     });
 })
@@ -80,11 +80,11 @@ const updateEvent = catchAsync(async (req, res) => {
         });
         req.body.image = image
     }
-    const result = await eventService.updateEvent(req.body, req.params.id, req.user?._id)
+    const result = await eventService.updateEvent(req.body, req.params.id, req.user?._id, req?.user?.role)
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Event Updated Successfully',
+        message: 'Event successfully updated!',
         data: result,
     });
 })

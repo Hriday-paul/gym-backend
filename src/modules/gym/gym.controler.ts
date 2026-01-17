@@ -56,7 +56,7 @@ const AddGymByUser = catchAsync(async (req, res) => {
     const files = req.files as Record<string, Express.Multer.File[]> | undefined;
 
     if (!files)
-        throw new AppError(httpStatus.BAD_REQUEST, "Files are missing from request");
+        throw new AppError(httpStatus.BAD_REQUEST, "Files used for verification are missing from your request!");
 
     // required fields
     const requiredDocs = ["utility_bill", "business_license", "tax_document"];
@@ -102,7 +102,7 @@ const AddGymByUser = catchAsync(async (req, res) => {
         if (urls?.length <= 0) {
             throw new AppError(
                 httpStatus.BAD_REQUEST,
-                'Minimum 1 image is required',
+                'Minimum of 1 image required for verification!',
             );
         }
     }
@@ -111,7 +111,7 @@ const AddGymByUser = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'New Gym Requested Successfully',
+        message: 'Your gym request was successfully received!',
         data: result,
     });
 })
@@ -138,11 +138,11 @@ const GymDetails = catchAsync(async (req, res) => {
 
 const DeleteGym = catchAsync(async (req, res) => {
 
-    const result = await gymService.DeleteGym(req.user._id, req.params.id)
+    const result = await gymService.DeleteGym(req.user._id, req.params.id, req?.user?.role)
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Gym Deleted Successfully',
+        message: 'Gym successfully deleted!',
         data: result,
     });
 })
@@ -153,7 +153,7 @@ const deleteGymImage = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Gym Image Deleted Successfully',
+        message: 'Image successfully deleted!',
         data: result,
     });
 })
@@ -188,7 +188,7 @@ const updateGym = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Gym Updated Successfully',
+        message: 'Gym successfully updated!',
         data: result,
     });
 })

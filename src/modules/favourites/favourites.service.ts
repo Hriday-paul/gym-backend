@@ -10,13 +10,13 @@ const addFavourite = async (gym: string, user: string) => {
     const existProduct = await GYM.findById(gym);
 
     if (!existProduct) {
-        throw new AppError(httpstatus.NOT_FOUND, "gym not found for save")
+        throw new AppError(httpstatus.NOT_FOUND, "Gym not found for bookmark.")
     }
 
     const exist = await Favorites.findOne({ gym, user });
 
     if (exist) {
-        throw new AppError(httpstatus.FORBIDDEN, "gym already exist to your saved gyms")
+        throw new AppError(httpstatus.FORBIDDEN, "You have already saved this gym!")
     }
 
     const res = await Favorites.insertOne({ gym, user });
@@ -29,7 +29,7 @@ const deletefavourite = async (gym: string, user: string) => {
     const exist = await Favorites.findOne({ _id : gym, user });
 
     if (!exist) {
-        throw new AppError(httpstatus.NOT_FOUND, "Gym not found in the saved list")
+        throw new AppError(httpstatus.NOT_FOUND, "Gym not found in favorites")
     }
 
     const res = await Favorites.deleteOne({ _id : gym });

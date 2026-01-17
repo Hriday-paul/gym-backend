@@ -46,7 +46,7 @@ const updateProfile = catchAsync(async (req: Request<{}, {}, IUser>, res: Respon
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'profile updated successfully',
+        message: 'Profile successfully updated!',
         data: result,
     });
 
@@ -91,7 +91,7 @@ const AddRecentCompetition: RequestHandler<{ id: string }, {}, { status: boolean
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Modified recent competition',
+        message: 'Recent competition results successfully modified!',
         data: result,
     });
 })
@@ -104,7 +104,7 @@ const deletemyAccount = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Your account deleted successfully',
+        message: 'Your account has successfully been deleted!',
         data: result,
     });
 })

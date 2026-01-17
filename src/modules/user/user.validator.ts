@@ -12,9 +12,9 @@ export const statusUpdateValidator = [
 //   result: "Gold" | "Silver" | "Bronze" | "DNP"
 
 export const competitionAddValidator = [
-    check('event_name').trim().not().isEmpty().withMessage('event_name is required'),
-    check('event_date').trim().not().isEmpty().withMessage('event_date is required').isISO8601().toDate().withMessage('Invalid date format'),
-    check('division').trim().not().isEmpty().withMessage('division is required').isIn(["Gi", "NoGi", "Gi Absolute", "NoGi Absolute"]).withMessage("division type invalid"),
+    check('event_name').trim().not().isEmpty().withMessage('Event name is required!'),
+    check('event_date').trim().not().isEmpty().withMessage('Event date is required!').isISO8601().toDate().withMessage('Invalid date format'),
+    check('division').trim().not().isEmpty().withMessage('Division is required').isIn(["Gi", "NoGi", "Gi Absolute", "NoGi Absolute"]).withMessage("Division type invalid"),
     check('result').trim().not().isEmpty().withMessage('result is required').isIn(["Gold", "Silver", "Bronze", "DNP"]).withMessage("result type invalid"),
     check('state').trim().not().isEmpty().withMessage('state is required'),
     check('city').trim().not().isEmpty().withMessage('city is required'),

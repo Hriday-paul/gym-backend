@@ -9,7 +9,7 @@ import { body } from "express-validator";
 //     tax_document : { key: string; url: string },
 
 export const addClaimReqValidator = [
-    body('email').trim().not().isEmpty().withMessage('Email is required').isEmail().normalizeEmail({ all_lowercase: true }).withMessage('Invalid Email'),
+    body('email').trim().not().isEmpty().withMessage('Email address is required!').isEmail().normalizeEmail({ all_lowercase: true }).withMessage('Valid email address is required!'),
 
     body('phone').optional().trim().isMobilePhone('any').withMessage('Invalid phone number'), //.isMobilePhone('any').withMessage('Invalid contact number')
 

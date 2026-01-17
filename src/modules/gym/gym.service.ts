@@ -12,6 +12,7 @@ import { sendNotification } from "../notification/notification.utils";
 import { startSession } from "mongoose";
 import { IClaimReq } from "../claimRequests/claimRequests.interface";
 import { ClaimReq } from "../claimRequests/claimRequests.model";
+import { USER_ROLE } from "../user/user.constants";
 
 export const muniteNumber_to_time = (minute: number) => {
     const hour = Math.floor(minute / 60);
@@ -63,8 +64,8 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimR
         const tokenToUse = user?.fcmToken;
 
         sendNotification(tokenToUse ? [tokenToUse] : [], {
-            title: `New Gym under review`,
-            message: `Your Gym will review by admin and they will approve it`,
+            title: "New gym under review",
+            message: "Your gym is under review by the admin. It will be approved once the review is complete.",
             receiver: user?._id,
             receiverEmail: payload.email,
             receiverRole: user.role,
@@ -129,14 +130,14 @@ const GymDetails = async (gymId: string, userId: string) => {
     return details[0]
 }
 
-const DeleteGym = async (userId: string, gymId: string) => {
+const DeleteGym = async (userId: string, gymId: string, role: string) => {
     const exist = await GYM.findOne({ _id: gymId });
 
     if (!exist) {
-        throw new AppError(httpstatus.NOT_FOUND, "Gym not found")
+        throw new AppError(httpstatus.NOT_FOUND, "Gym not found!")
     }
 
-    if (exist.user.toString() !== userId) {
+    if (exist.user.toString() !== userId && role !== USER_ROLE.admin) {
         throw new AppError(httpstatus.BAD_REQUEST, "You are not owner this gym")
     }
 

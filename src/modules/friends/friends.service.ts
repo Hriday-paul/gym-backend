@@ -51,7 +51,7 @@ const FolowFriend = async (userId: string, payload: IFriend) => {
     //check exist
     const exist = await Friend.findOne({ friend_id: payload?.friend_id, user_id: userId });
     if (exist) {
-        throw new AppError(httpstatus.CONFLICT, "You already folowed by this user")
+        throw new AppError(httpstatus.CONFLICT, "You are already followed by this user.")
     }
     const res = await Friend.create({ friend_id: payload?.friend_id, user_id: userId })
 
@@ -62,7 +62,7 @@ const UnFolowFriend = async (friendId: string, userId: string) => {
     //check exist
     const exist = await Friend.findOne({ friend_id: friendId, user_id: userId });
     if (!exist) {
-        throw new AppError(httpstatus.NOT_FOUND, "User not found in friend list")
+        throw new AppError(httpstatus.NOT_FOUND, "User not found on your friends list")
     }
 
     const res = await Friend.deleteOne({ friend_id: friendId, user_id: userId });

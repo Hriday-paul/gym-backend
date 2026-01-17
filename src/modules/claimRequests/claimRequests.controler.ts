@@ -12,7 +12,7 @@ export const AddclaimReq = catchAsync(async (req, res) => {
     const files = req.files as Record<string, Express.Multer.File[]> | undefined;
 
     if (!files)
-        throw new AppError(httpStatus.BAD_REQUEST, "Files are missing from request");
+        throw new AppError(httpStatus.BAD_REQUEST, "Files used for verification are missing from your request!");
 
     // required fields
     const requiredDocs = ["utility_bill", "business_license", "tax_document"];
@@ -51,15 +51,15 @@ export const AddclaimReq = catchAsync(async (req, res) => {
 
     //send notification to admin
     sendAdminNotifications({
-        title: "User requested a gym for claim",
-        message: "A user has requested to add a new gym for their claim. Please review the request.",
+        title: "Gym claim request",
+        message: "A user has requested to claim a gym. Please review the request.",
         sender: req.user?._id as any,
     })
 
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: "Claim requested successfully",
+        message: "Your gym claim has been requested!",
         data: result,
     });
 });
@@ -69,7 +69,7 @@ const ApproveClaimReq = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: 'Claim approved successfully',
+        message: 'Gym claim approved successfully',
         data: result,
     });
 });
@@ -79,7 +79,7 @@ const RejectClaimReq = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: 'Claim rejected successfully',
+        message: 'Gym claim rejected successfully',
         data: result,
     });
 });

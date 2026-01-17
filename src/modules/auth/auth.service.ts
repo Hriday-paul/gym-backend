@@ -23,7 +23,7 @@ const createUser = async (payload: IUser) => {
     if (isExist && isExist?.isverified) {
         throw new AppError(
             httpStatus.FORBIDDEN,
-            'User already exists with this email',
+            'An account already exists with this email address.',
         );
     }
 
@@ -33,7 +33,7 @@ const createUser = async (payload: IUser) => {
     const user = await User.findOneAndUpdate({ email }, { first_name, last_name, email, contact, password: hashedPassword }, { upsert: true, new: true }).select("first_name last_name email contact");
 
     if (!user) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'User creation failed');
+        throw new AppError(httpStatus.BAD_REQUEST, 'Account creation unsuccessful.');
     }
 
     const userDoc = (user as any).toObject();
@@ -62,7 +62,7 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
         }
 
         if (!user?.isverified) {
-            throw new AppError(httpStatus.BAD_REQUEST, 'Your account is not verified');
+            throw new AppError(httpStatus.BAD_REQUEST, 'Your account has not been verified!');
         }
 
         // Handle verify password
@@ -342,7 +342,7 @@ const resetPassword = async (token: string, payload: { newPassword: string, conf
         throw new AppError(httpStatus.FORBIDDEN, 'Session has expired');
     }
     if (!user?.verification?.status) {
-        throw new AppError(httpStatus.FORBIDDEN, 'OTP is not verified yet');
+        throw new AppError(httpStatus.FORBIDDEN, 'One time password has not been verified.');
     }
     if (payload?.newPassword !== payload?.confirmPassword) {
         throw new AppError(
@@ -381,7 +381,7 @@ const refreshToken = async (token: string) => {
     const isDeleted = user?.isDeleted;
 
     if (isDeleted) {
-        throw new AppError(httpStatus.FORBIDDEN, 'This user is deleted');
+        throw new AppError(httpStatus.FORBIDDEN, 'This account has been deleted.');
     }
 
     const jwtPayload = {

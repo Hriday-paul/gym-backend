@@ -10,7 +10,7 @@ const deleteFavourite = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Gym removed successfully from save',
+        message: 'Gym successfully removed.',
         data: result,
     });
 })
@@ -22,7 +22,7 @@ const addFavourite = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Gym saved successfully',
+        message: 'Gym successfully saved!',
         data: result,
     });
 })

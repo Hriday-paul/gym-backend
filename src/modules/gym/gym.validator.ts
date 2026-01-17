@@ -1,33 +1,10 @@
 import { check, query } from "express-validator";
 
-// images: string[],
-//     name: string,
-//     description: string,
-//     street: string,
-//     state: string,
-//     city: string,
-//     zip_code: string,
-//     phone: string,
-//     email: string,
-//     website: string,
-//     facebook: string,
-//     instagram: string,
-//     mat_schedules: { day : string, from: string, to: string }[],
-//     class_schedules: { day : string, from: string, to: string }[],
-//     disciplines : string[],
-
-//     isDeleted : boolean,
-//     isClaimed : boolean,
-
-//     user : ObjectId,
-
-//     location : {type : string, coordinates : number[]}
-
 export const gymAddValidator = [
-    check('name').trim().not().isEmpty().withMessage('name is required'),
+    check('name').trim().not().isEmpty().withMessage('Name is required!'),
     check('description').trim().optional(),
-    check('email').trim().not().isEmpty().withMessage('Email is required').isEmail().normalizeEmail({ all_lowercase: true }).withMessage('Invalid Email'),
-    check('phone').optional().trim().isMobilePhone('any').withMessage('Invalid phone number'), //.isMobilePhone('any').withMessage('Invalid contact number')
+    check('email').trim().not().isEmpty().withMessage('Email address is required!').isEmail().normalizeEmail({ all_lowercase: true }).withMessage('Valid email address is required!'),
+    check('phone').optional().trim().isMobilePhone('any').withMessage('Invalid phone number!'), //.isMobilePhone('any').withMessage('Invalid contact number')
 
     check('mat_schedules')
         .isArray()
@@ -79,7 +56,7 @@ export const gymAddValidator = [
         .isString()
         .withMessage('Each disciplines must be string'),
 
-    check("location").exists().withMessage("location is required").isObject().withMessage("location must be an object"),
+    check("location").exists().withMessage("Location is required!").isObject().withMessage("Location must be an object"),
 
     // coordinates must be an array of exactly 2 items
     check("location.coordinates")
@@ -94,13 +71,13 @@ export const gymAddValidator = [
 ]
 
 export const deleteGymImageValidator = [
-    check('gymId').trim().not().isEmpty().withMessage('gymId is required').isMongoId().withMessage("gymId invalid"),
-    check('imageId').trim().not().isEmpty().withMessage('imageId is required').isMongoId().withMessage("imageId invalid"),
+    check('gymId').trim().not().isEmpty().withMessage('Gym id required!').isMongoId().withMessage("Gym id invalid!"),
+    check('imageId').trim().not().isEmpty().withMessage('Image id is required').isMongoId().withMessage("Image id invalid"),
 ]
 
 export const gymUpdateValidator = [
 
-    check('email').trim().optional().isEmail().normalizeEmail({ all_lowercase: true }).withMessage('Invalid Email'),
+    check('email').trim().optional().isEmail().normalizeEmail({ all_lowercase: true }).withMessage('Invalid email address!'),
     check('phone').optional().trim().isMobilePhone('any').withMessage('Invalid phone number'), //.isMobilePhone('any').withMessage('Invalid contact number')
 
     check('mat_schedules')

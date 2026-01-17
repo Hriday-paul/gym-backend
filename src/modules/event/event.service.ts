@@ -1,6 +1,7 @@
 import QueryBuilder from "../../builder/QueryBuilder";
 import AppError from "../../error/AppError";
 import { deleteFromS3 } from "../../utils/s3";
+import { USER_ROLE } from "../user/user.constants";
 import { User } from "../user/user.models";
 import { IEvent } from "./event.interface";
 import { Event } from "./event.model"
@@ -31,15 +32,15 @@ const myEvents = async (userId: string) => {
 }
 
 
-const deleteEvent = async (eventId: string, userId: string) => {
+const deleteEvent = async (eventId: string, userId: string, role : string) => {
     const exist = await Event.findById(eventId);
 
     if (!exist) {
         throw new AppError(httpStatus.NOT_FOUND, "Event not found");
     }
 
-    if (exist.user.toString() !== userId) {
-        throw new AppError(httpStatus.BAD_REQUEST, "You are not owner this event");
+    if (exist.user.toString() !== userId && role !== USER_ROLE.admin) {
+        throw new AppError(httpStatus.BAD_REQUEST, "You’re not the owner of this event!");
     }
 
     const res = await Event.deleteOne({ _id: eventId });
@@ -49,7 +50,7 @@ const deleteEvent = async (eventId: string, userId: string) => {
     return res;
 }
 
-const updateEvent = async (payload: IEvent, eventId: string, userId: string) => {
+const updateEvent = async (payload: IEvent, eventId: string, userId: string, role : string) => {
 
     const exist = await Event.findById(eventId)
 
@@ -57,11 +58,10 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string) => 
         throw new AppError(httpStatus.NOT_FOUND, "Event not found");
     }
 
-    if (exist.user.toString() !== userId) {
-        const checkUserRole = await User.findById(userId);
-        if (checkUserRole?.role != "admin") {
-            throw new AppError(httpStatus.BAD_REQUEST, "You are not owner this event");
-        }
+    if (exist.user.toString() !== userId && role !== USER_ROLE.admin) {
+        
+            throw new AppError(httpStatus.BAD_REQUEST, "You’re not the owner of this event!");
+        
     }
 
     const { city, date, event_website, gym, image, name, registration_fee, state, venue } = payload

@@ -20,18 +20,18 @@ const CheckclaimReq = async (gymId: string, userId: string) => {
     const gym = await GYM.findById(gymId);
 
     if (!gym) {
-        throw new AppError(httpstatus.NOT_FOUND, "GYM not found");
+        throw new AppError(httpstatus.NOT_FOUND, "Gym not found!");
     }
     //gym already claimed or not
     if (gym.isClaimed) {
-        throw new AppError(httpstatus.BAD_REQUEST, "Requested GYM is not available for claim");
+        throw new AppError(httpstatus.BAD_REQUEST, "The gym you requested to claim is not available.");
     }
 
     //check is exist or not
     const exist = await ClaimReq.findOne({ user: userId, gym: gymId });
 
     if (exist) {
-        throw new AppError(httpstatus.CONFLICT, "You already requested to this GYM for claim");
+        throw new AppError(httpstatus.CONFLICT, "You have already requested to claim this gym!");
     }
 
 }
@@ -48,11 +48,11 @@ const ApproveClaimReq = async (claimId: string) => {
         const exist = await ClaimReq.findOne({ _id: claimId }).populate("user");
 
         if (!exist) {
-            throw new AppError(httpstatus.NOT_FOUND, "Claim request not available");
+            throw new AppError(httpstatus.NOT_FOUND, "Claim request unavailable.");
         }
 
         if (exist.status == "approved") {
-            throw new AppError(httpstatus.BAD_REQUEST, "Claim already approved");
+            throw new AppError(httpstatus.BAD_REQUEST, "Your gym claim has already been approved!");
         }
 
         //owner transfer
@@ -70,8 +70,8 @@ const ApproveClaimReq = async (claimId: string) => {
         const tokenToUse = user?.fcmToken;
 
         sendNotification(tokenToUse ? [tokenToUse] : [], {
-            title: `Gym request is approved`,
-            message: `Your Gym request is approved. A New gym added to your account`,
+            title: `Your gym request has been approved!`,
+            message: `Your request to claim gym has been approved! It will be visible under “my gyms”.`,
             receiver: user?._id,
             receiverEmail: user?.email,
             receiverRole: user.role,
@@ -95,11 +95,11 @@ const RejectClaimReq = async (claimId: string) => {
     const exist = await ClaimReq.findOne({ _id: claimId }).populate("user");
 
     if (!exist) {
-        throw new AppError(httpstatus.NOT_FOUND, "Claim request not available");
+        throw new AppError(httpstatus.NOT_FOUND, "Claim request unavailable.");
     }
 
     if (exist.status == "rejected") {
-        throw new AppError(httpstatus.BAD_REQUEST, "Claim already rejected");
+        throw new AppError(httpstatus.BAD_REQUEST, "Unfortunately, your gym claim was rejected.");
     }
 
 
@@ -113,8 +113,8 @@ const RejectClaimReq = async (claimId: string) => {
     const tokenToUse = user?.fcmToken;
 
     sendNotification(tokenToUse ? [tokenToUse] : [], {
-        title: `Gym request is rejected`,
-        message: `Your Gym request is rejected by admin. Please, provide valid information for approval.`,
+        title: `Your gym request has been rejected!`,
+        message: `Unfortunately, your request to claim gym has been rejected. Please provide valid documents and information for verification purposes!`,
         receiver: user?._id,
         receiverEmail: user?.email,
         receiverRole: user.role,
