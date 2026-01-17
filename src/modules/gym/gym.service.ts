@@ -333,25 +333,25 @@ const allGymsForApp = async (query: Record<string, any>, userId: string) => {
             coordinates: cordinates, // [longitude, latitude]
         };
 
-        const geoNearStage: any = {
-            $geoNear: {
-                near: cordinates,
-                distanceField: "distance",
-                spherical: true,
-            },
+        const geoNear: any = {
+            near: userLocation,
+            distanceField: "distance",
+            spherical: true,
         };
 
         if (distance) {
-            geoNearStage.$geoNear.maxDistance = Number(distance);
+            geoNear.maxDistance = Number(distance);
         }
 
-        pipeline.unshift(geoNearStage);
+        pipeline.unshift({
+            $geoNear: geoNear
+        });
 
         // pipeline.unshift({
         //     $geoNear: {
         //         near: userLocation,
         //         distanceField: "distance",
-        //         maxDistance: distance ? Number(distance) : 50000, // default 50 km
+        //         maxDistance: distance ? Number(distance) : 99999999999, // default 50 km
         //         spherical: true,
         //     },
         // })
