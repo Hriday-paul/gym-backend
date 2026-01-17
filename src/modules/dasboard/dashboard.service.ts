@@ -47,7 +47,7 @@ const earningChart = async (query: Record<string, any>) => {
 
 const countData = async () => {
     const totalUsers = await User.countDocuments({ status: 1 });
-    const totalGym = await GYM.countDocuments();
+    const totalGym = await GYM.countDocuments({status : "approved"});
 
     return { totalUsers: totalUsers.toFixed(), totalGym : totalGym.toFixed()}
 }
