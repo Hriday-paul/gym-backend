@@ -7,6 +7,7 @@ import { uploadManyToS3, uploadToS3 } from "../../utils/s3";
 import { sendAdminNotifications } from "../notification/notification.send.admin";
 import { GYM } from "./gym.model";
 import { USER_ROLE } from "../user/user.constants";
+import path from "path"
 
 //add gym by admin
 const AddGymByAdmin = catchAsync(async (req, res) => {
@@ -69,15 +70,23 @@ const AddGymByUser = catchAsync(async (req, res) => {
     const uploads = await Promise.all(
         requiredDocs.map(async (field) => {
             const file = files[field][0];
+            const ext =
+                file?.originalname
+                    ? path.extname(file.originalname)
+                    : "";
+
+            const newFileName = `${Math.floor(100000 + Math.random() * 900000)}${Date.now()}${ext}`;
+
             const uploaded = await uploadToS3({
                 file,
-                fileName: `images/files/${Math.floor(100000 + Math.random() * 900000)}`,
+                fileName: `images/files/${newFileName}`,
             });
+
             return { field, url: uploaded };
         })
     );
 
-    const claimReqs : any = {};
+    const claimReqs: any = {};
 
     // attach uploaded file URLs
     uploads.forEach(({ field, url }) => {

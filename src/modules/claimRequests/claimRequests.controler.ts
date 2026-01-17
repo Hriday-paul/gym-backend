@@ -5,6 +5,7 @@ import { uploadToS3 } from "../../utils/s3";
 import sendResponse from "../../utils/sendResponse";
 import { claimReqService } from "./claimRequests.service";
 import httpStatus from "http-status"
+import path from "path"
 import { sendAdminNotifications } from "../notification/notification.send.admin";
 
 export const AddclaimReq = catchAsync(async (req, res) => {
@@ -30,9 +31,17 @@ export const AddclaimReq = catchAsync(async (req, res) => {
     const uploads = await Promise.all(
         requiredDocs.map(async (field) => {
             const file = files[field][0];
+
+            const ext =
+                file?.originalname
+                    ? path.extname(file.originalname)
+                    : "";
+
+            const newFileName = `${Math.floor(100000 + Math.random() * 900000)}${Date.now()}${ext}`;
+
             const uploaded = await uploadToS3({
                 file,
-                fileName: `images/files/${Math.floor(100000 + Math.random() * 900000)}`,
+                fileName: `images/files/${newFileName}`,
             });
             return { field, url: uploaded };
         })
