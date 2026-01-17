@@ -204,13 +204,13 @@ const nearMeMats = catchAsync(async (req, res) => {
     });
 })
 
-const allMats = catchAsync(async (req, res) => {
+const allGymsForApp = catchAsync(async (req, res) => {
 
-    const result = await gymService.allMats(req.query, req.user?._id)
+    const result = await gymService.allGymsForApp(req.query, req.user?._id)
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'All mats retrived successfully',
+        message: 'All gyms retrived successfully',
         data: result,
     });
 })
@@ -228,6 +228,17 @@ const allGyms = catchAsync(async (req, res) => {
     });
 })
 
+const AllMats = catchAsync(async (req, res) => {
+
+    const result = await gymService.AllMats(req.query)
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'All mats retrived successfully',
+        data: result,
+    });
+})
+
 export const gymControler = {
     AddGymByAdmin,
     AddGymByUser,
@@ -236,7 +247,8 @@ export const gymControler = {
     deleteGymImage,
     updateGym,
     nearMeMats,
-    allMats,
+    allGymsForApp,
     GymDetails,
-    allGyms
+    allGyms,
+    AllMats
 }

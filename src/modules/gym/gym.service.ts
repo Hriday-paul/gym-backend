@@ -276,7 +276,7 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
     return gyms;
 }
 
-const allMats = async (query: Record<string, any>, userId: string) => {
+const allGymsForApp = async (query: Record<string, any>, userId: string) => {
     const distance = query?.distance;
     const disciplines = query?.disciplines ? query?.disciplines.split(",") : [];
     const search = query?.searchTerm || "";
@@ -324,8 +324,8 @@ const allMats = async (query: Record<string, any>, userId: string) => {
         { $sort: distance ? { distance: 1 } : { createdAt: -1 } }
     );
 
-    const products = await GYM.aggregate(pipeline);
-    return products;
+    const gyms = await GYM.aggregate(pipeline);
+    return gyms;
 };
 
 
@@ -343,6 +343,36 @@ const allGyms = async (query: Record<string, any>) => {
     };
 }
 
+const AllMats = async (query: Record<string, any>) => {
+
+    // const gyms = await GYM.find(
+    //     { class_schedules: { $ne: [] } },
+    //     // { name: 1, class_schedules: 1 }
+    // );
+
+    const allClassSchedules = await GYM.aggregate([
+        { $unwind: "$class_schedules" },
+        {
+            $project: {
+                _id: 0,
+                gymId: "$_id",
+                gymName: "$name",
+                ...{
+                    day: "$class_schedules.day",
+                    from: "$class_schedules.from",
+                    from_view: "$class_schedules.from_view",
+                    to: "$class_schedules.to",
+                    to_view: "$class_schedules.to_view",
+                    name: "$class_schedules.name",
+                },
+            },
+        },
+    ]);
+
+    return allClassSchedules;
+
+}
+
 export const gymService = {
     AddGymByAdmin,
     AddGymByUser,
@@ -351,7 +381,8 @@ export const gymService = {
     deleteGymImage,
     updateGym,
     nearMeMats,
-    allMats,
+    allGymsForApp,
     GymDetails,
-    allGyms
+    allGyms,
+    AllMats
 }
