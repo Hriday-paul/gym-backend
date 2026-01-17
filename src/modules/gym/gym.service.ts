@@ -230,6 +230,10 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
 
     const current = Number(hour) * 60 + Number(minute);
 
+    const SIX_HOURS = 6 * 60;
+
+    console.log(current + SIX_HOURS, current);
+
     const filters: any = {
         $and: [
             { "mat_schedules.day": day },
@@ -242,7 +246,9 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
                             { "mat_schedules.to": { $gte: current } }
                         ]
                     },
-                    { "mat_schedules.from": { $gt: current } }
+                    {
+                        from: { $gt: current, $lte: current + SIX_HOURS },
+                    },
                 ]
             }
         ]
@@ -351,19 +357,19 @@ const AllMats = async (query: Record<string, any>) => {
     // );
 
     const allClassSchedules = await GYM.aggregate([
-        { $unwind: "$class_schedules" },
+        { $unwind: "$mat_schedules" },
         {
             $project: {
                 _id: 0,
                 gymId: "$_id",
                 gymName: "$name",
+                gymImages: "$images",
                 ...{
-                    day: "$class_schedules.day",
-                    from: "$class_schedules.from",
-                    from_view: "$class_schedules.from_view",
-                    to: "$class_schedules.to",
-                    to_view: "$class_schedules.to_view",
-                    name: "$class_schedules.name",
+                    day: "$mat_schedules.day",
+                    from: "$mat_schedules.from",
+                    from_view: "$mat_schedules.from_view",
+                    to: "$mat_schedules.to",
+                    to_view: "$mat_schedules.to_view",
                 },
             },
         },
