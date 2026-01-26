@@ -90,7 +90,7 @@ const MyGyms = async (userId: string) => {
 
 const GymDetails = async (gymId: string, userId: string) => {
 
-    const details = await GYM.aggregate([
+    const details : IGym[] = await GYM.aggregate([
         { $match: { _id: new ObjectId(gymId) } },
         {
             $lookup: {
@@ -123,11 +123,30 @@ const GymDetails = async (gymId: string, userId: string) => {
     if (!details[0]) {
         throw new AppError(
             httpStatus.NOT_FOUND,
-            'Product not found',
+            'Gym not found',
         );
     }
 
-    return details[0]
+    const gym = details[0];
+
+    const dayOrder = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+    ];
+
+    gym?.class_schedules.sort(
+        (a, b) => dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day)
+    );
+    gym?.mat_schedules.sort(
+        (a, b) => dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day)
+    );
+
+    return gym
 }
 
 const DeleteGym = async (userId: string, gymId: string, role: string) => {
@@ -289,6 +308,7 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
                 distanceField: "distance",
                 maxDistance: 50000,   // optional: 50km radius (in meters)
                 spherical: true,
+                distanceMultiplier: 0.000621371192 // convert to mile
             }
         },
         {
@@ -338,6 +358,7 @@ const allGymsForApp = async (query: Record<string, any>, userId: string) => {
             near: userLocation,
             distanceField: "distance",
             spherical: true,
+            distanceMultiplier: 0.000621371192 // for get mile
         };
 
         if (distance) {

@@ -38,8 +38,8 @@ const AddGymByAdmin = catchAsync(async (req, res) => {
 
     //send notification to admin
     sendAdminNotifications({
-        title: "New Gym Added by you to your application",
-        message: "A new gym has been successfully added to your application.",
+        title: "Gym Added by Admin",
+        message: "A new gym has been added by an administrator and is now available in the system.",
         sender: req.user?._id as any,
     });
 
