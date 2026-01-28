@@ -1,8 +1,9 @@
+import moment from "moment";
 import QueryBuilder from "../../builder/QueryBuilder";
+import agenda from "../../config/agenda";
 import AppError from "../../error/AppError";
 import { deleteFromS3 } from "../../utils/s3";
 import { USER_ROLE } from "../user/user.constants";
-import { User } from "../user/user.models";
 import { IEvent } from "./event.interface";
 import { Event } from "./event.model"
 import httpStatus from "http-status";
@@ -21,8 +22,27 @@ const allEvents = async (query: Record<string, any>) => {
     };
 }
 
+// -----------------------------event delete schedule------------------
+
+agenda.define("event close", async (job: any) => {
+
+    const { eventId } = job.attrs.data;
+
+    await Event.deleteOne({ _id: eventId });
+
+    return null;
+
+});
+
 const addEvent = async (payload: IEvent) => {
     const res = await Event.create(payload);
+
+    const thirdDayUTC = moment(payload.date).add(3, "days").utc().format();
+
+    await agenda.schedule(thirdDayUTC, "event close", {
+        eventId: res?._id,
+    });
+
     return res;
 }
 
@@ -32,7 +52,7 @@ const myEvents = async (userId: string) => {
 }
 
 
-const deleteEvent = async (eventId: string, userId: string, role : string) => {
+const deleteEvent = async (eventId: string, userId: string, role: string) => {
     const exist = await Event.findById(eventId);
 
     if (!exist) {
@@ -47,10 +67,13 @@ const deleteEvent = async (eventId: string, userId: string, role : string) => {
 
     await deleteFromS3(exist?.image?.key);
 
+    // remove schedule event delete
+    await agenda.cancel({ "data.eventId": eventId });
+
     return res;
 }
 
-const updateEvent = async (payload: IEvent, eventId: string, userId: string, role : string) => {
+const updateEvent = async (payload: IEvent, eventId: string, userId: string, role: string) => {
 
     const exist = await Event.findById(eventId)
 
@@ -59,9 +82,9 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string, rol
     }
 
     if (exist.user.toString() !== userId && role !== USER_ROLE.admin) {
-        
-            throw new AppError(httpStatus.BAD_REQUEST, "You’re not the owner of this event!");
-        
+
+        throw new AppError(httpStatus.BAD_REQUEST, "You’re not the owner of this event!");
+
     }
 
     const { city, date, event_website, gym, image, name, registration_fee, state, venue } = payload
@@ -84,7 +107,20 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string, rol
         );
     }
 
-    const result = await Event.updateOne({ _id: eventId }, updateFields)
+    const result = await Event.updateOne({ _id: eventId }, updateFields);
+
+    if (date) {
+        // remove schedule event delete
+        await agenda.cancel({ "data.eventId": eventId });
+
+        // generate new event
+        const thirdDayUTC = moment(payload.date).add(3, "days").utc().format();
+
+        await agenda.schedule(thirdDayUTC, "event close", {
+            eventId: eventId,
+        });
+
+    }
 
     return result
 }

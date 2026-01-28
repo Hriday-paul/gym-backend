@@ -3,7 +3,6 @@ import { IClaimReq } from './claimRequests.interface';
 
 const ClaimSchema: Schema<IClaimReq> = new Schema(
     {
-
         email: { type: String, required: true },
         phone: { type: String, required: true },
         gym: { type: Schema.Types.ObjectId, ref: "gyms", required: true },

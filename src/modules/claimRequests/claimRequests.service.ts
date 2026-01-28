@@ -102,7 +102,6 @@ const RejectClaimReq = async (claimId: string) => {
         throw new AppError(httpstatus.BAD_REQUEST, "Unfortunately, your gym claim was rejected.");
     }
 
-
     // update status
     await ClaimReq.updateOne({ _id: claimId }, { status: "rejected" });
 
