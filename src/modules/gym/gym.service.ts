@@ -362,7 +362,7 @@ const allGymsForApp = async (query: Record<string, any>, userId: string) => {
         };
 
         if (distance) {
-            geoNear.maxDistance = Number(distance);
+            geoNear.maxDistance = Number(distance) / 0.000621371192;
         }
 
         pipeline.unshift({
@@ -388,7 +388,7 @@ const allGymsForApp = async (query: Record<string, any>, userId: string) => {
     return gyms;
 };
 
-
+//------------for admin---------------
 const allGyms = async (query: Record<string, any>) => {
     const gymModel = new QueryBuilder(GYM.find().populate("user"), query)
         .search(['name', 'description', "street", "state", "city", "phone", "email"])

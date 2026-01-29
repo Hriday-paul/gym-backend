@@ -224,6 +224,7 @@ const allGymsForApp = catchAsync(async (req, res) => {
     });
 })
 
+//--------for admin--------------
 const allGyms = catchAsync(async (req, res) => {
 
     req.query.status = "approved";
