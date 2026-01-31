@@ -301,24 +301,82 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
         coordinates: [Number(long), Number(lat)], // [longitude, latitude]
     };
 
-    const gyms = await GYM.aggregate([
+    // const gyms = await GYM.aggregate([
+    //     {
+    //         $geoNear: {
+    //             near: userLocation,
+    //             distanceField: "distance",
+    //             maxDistance: 50000,   // optional: 50km radius (in meters)
+    //             spherical: true,
+    //             distanceMultiplier: 0.000621371192 // convert to mile
+    //         }
+    //     },
+    //     {
+    //         $match: filters
+    //     },
+    //     { $limit: 10 },
+    //     { $sort: { distance: 1 } },
+    // ]);
+
+    const mats = await GYM.aggregate([
         {
             $geoNear: {
                 near: userLocation,
                 distanceField: "distance",
-                maxDistance: 50000,   // optional: 50km radius (in meters)
+                maxDistance: 50000, // 50km
                 spherical: true,
-                distanceMultiplier: 0.000621371192 // convert to mile
-            }
+                distanceMultiplier: 0.000621371192, // miles
+            },
         },
         {
-            $match: filters
+            $match: {
+                status: "approved",
+            },
         },
-        { $limit: 10 },
+        {
+            $unwind: "$mat_schedules",
+        },
+        {
+            $match: {
+                "mat_schedules.day": day,
+                $or: [
+                    // currently open
+                    {
+                        "mat_schedules.from": { $lte: current },
+                        "mat_schedules.to": { $gte: current },
+                    },
+                    // starts within next 6 hours
+                    {
+                        "mat_schedules.from": {
+                            $gt: current,
+                            $lte: current + SIX_HOURS,
+                        },
+                    },
+                ],
+            },
+        },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                distance: 1,
+                location: 1,
+                images: 1,
+
+                // ONLY MAT INFO
+                day: "$mat_schedules.day",
+                from: "$mat_schedules.from",
+                to: "$mat_schedules.to",
+                from_view: "$mat_schedules.from_view",
+                to_view: "$mat_schedules.to_view",
+            },
+        },
         { $sort: { distance: 1 } },
+        { $limit: 10 },
     ]);
 
-    return gyms;
+
+    return mats;
 }
 
 const allGymsForApp = async (query: Record<string, any>, userId: string) => {
