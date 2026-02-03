@@ -129,7 +129,7 @@ class QueryBuilder<T> {
     const newValues = values ? values.split(',') : [];
     if (newValues && newValues.length > 0) {
       const filter: any = {
-        [field]: { $all: newValues } as any,
+        [field]: { $in: newValues } as any,
       };
       this.modelQuery = this.modelQuery.find(filter);
     }

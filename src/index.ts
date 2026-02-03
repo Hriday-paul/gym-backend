@@ -18,7 +18,7 @@ const app: Express = express();
 multer();
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(cors({
-  origin: ["https://admin.thejiujitsuapp.com", "https://www.admin.thejiujitsuapp.com"],
+  origin: ["https://admin.thejiujitsuapp.com", "https://www.admin.thejiujitsuapp.com", "http://localhost:5005"],
   credentials: true
 }));
 app.use(express.json({ limit: '500mb' }));
