@@ -64,7 +64,7 @@ const GymSchema = new Schema<IGym>(
         },
         email: {
             type: String,
-            required: true,
+            // required: true,
             trim: true,
         },
         website: {
