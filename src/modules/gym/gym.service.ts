@@ -346,7 +346,7 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
                 mat_schedules: {
                     $sortArray: {
                         input: "$mat_schedules",
-                        sortBy: { dayOrder: 1, from: 1 },
+                        sortBy: { from: 1 },
                     },
                 },
             }
