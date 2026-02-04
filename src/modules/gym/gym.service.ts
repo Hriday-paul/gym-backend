@@ -14,6 +14,26 @@ import { IClaimReq } from "../claimRequests/claimRequests.interface";
 import { ClaimReq } from "../claimRequests/claimRequests.model";
 import { USER_ROLE } from "../user/user.constants";
 
+const DayOrder = {
+    Sunday: 1,
+    Monday: 2,
+    Tuesday: 3,
+    Wednesday: 4,
+    Thursday: 5,
+    Friday: 6,
+    Saturday: 7,
+}
+
+type Day =
+    | "Sunday"
+    | "Monday"
+    | "Tuesday"
+    | "Wednesday"
+    | "Thursday"
+    | "Friday"
+    | "Saturday";
+
+
 export const muniteNumber_to_time = (minute: number) => {
     const hour = Math.floor(minute / 60);
     const min = minute % 60;
@@ -27,10 +47,12 @@ export const muniteNumber_to_time = (minute: number) => {
 const AddGymByAdmin = async (payload: IGym, userId: string) => {
 
     const matschedulesFormat = payload.mat_schedules.map(i => {
-        return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
+        const day = i?.day as Day;
+        return { day, dayOrder: DayOrder[day], from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
     })
     const classchedulesFormat = payload.class_schedules.map(i => {
-        return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
+        const day = i?.day as Day;
+        return { day, dayOrder: DayOrder[day], from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
     })
 
     const res = await GYM.create({ ...payload, isClaimed: false, user: userId, mat_schedules: matschedulesFormat, status: "approved", class_schedules: classchedulesFormat });
@@ -51,10 +73,12 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimR
         }
 
         const matschedulesFormat = payload.mat_schedules.map(i => {
-            return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
+            const day = i?.day as Day;
+            return { day, dayOrder: DayOrder[day], from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
         })
         const classchedulesFormat = payload.class_schedules.map(i => {
-            return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
+            const day = i?.day as Day;
+            return { day, dayOrder: DayOrder[day], from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
         })
 
         const gym = await GYM.create({ ...payload, isClaimed: true, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat });
@@ -90,7 +114,7 @@ const MyGyms = async (userId: string) => {
 
 const GymDetails = async (gymId: string, userId: string) => {
 
-    const details : IGym[] = await GYM.aggregate([
+    const details: IGym[] = await GYM.aggregate([
         { $match: { _id: new ObjectId(gymId) } },
         {
             $lookup: {
@@ -176,10 +200,12 @@ const updateGym = async (payload: IIGym, gymId: string) => {
     const { city, class_schedules, description, disciplines, email, facebook, instagram, location, mat_schedules, name, phone, state, street, website, zip_code, images, apartment } = payload;
 
     const matschedulesFormat = mat_schedules?.map(i => {
-        return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
+        const day = i?.day as Day;
+        return { day, dayOrder: DayOrder[day], from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to) }
     })
     const classchedulesFormat = class_schedules?.map(i => {
-        return { day: i?.day, from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name }
+        const day = i?.day as Day;
+        return { day, dayOrder: DayOrder[day], from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name }
     })
 
     const formattedLocation = location?.coordinates
@@ -252,46 +278,6 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
 
     const SIX_HOURS = 6 * 60;
 
-    // const filters: any = {
-    //     $and: [
-    //         { "mat_schedules.day": day },
-    //         { status: "approved" },
-    //         {
-    //             $or: [
-    //                 {
-    //                     $and: [
-    //                         { "mat_schedules.from": { $lte: current } },
-    //                         { "mat_schedules.to": { $gte: current } }
-    //                     ]
-    //                 },
-    //                 {
-    //                     "mat_schedules.from": { $gt: current, $lte: current + SIX_HOURS },
-    //                 },
-    //             ]
-    //         }
-    //     ]
-    // };
-
-    const filters = {
-        status: "approved",
-        mat_schedules: {
-            $elemMatch: {
-                day,
-                $or: [
-                    // currently open
-                    {
-                        from: { $lte: current },
-                        to: { $gte: current },
-                    },
-                    // starts within next 6 hours
-                    {
-                        from: { $gt: current, $lte: current + SIX_HOURS },
-                    },
-                ],
-            },
-        },
-    };
-
     if (!lat || !long) {
         return []
     }
@@ -300,23 +286,6 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
         type: "Point",
         coordinates: [Number(long), Number(lat)], // [longitude, latitude]
     };
-
-    // const gyms = await GYM.aggregate([
-    //     {
-    //         $geoNear: {
-    //             near: userLocation,
-    //             distanceField: "distance",
-    //             maxDistance: 50000,   // optional: 50km radius (in meters)
-    //             spherical: true,
-    //             distanceMultiplier: 0.000621371192 // convert to mile
-    //         }
-    //     },
-    //     {
-    //         $match: filters
-    //     },
-    //     { $limit: 10 },
-    //     { $sort: { distance: 1 } },
-    // ]);
 
     const mats = await GYM.aggregate([
         {
@@ -426,20 +395,18 @@ const allGymsForApp = async (query: Record<string, any>, userId: string) => {
         pipeline.unshift({
             $geoNear: geoNear
         });
-
-        // pipeline.unshift({
-        //     $geoNear: {
-        //         near: userLocation,
-        //         distanceField: "distance",
-        //         maxDistance: distance ? Number(distance) : 99999999999, // default 50 km
-        //         spherical: true,
-        //     },
-        // })
     }
 
     pipeline.push(
         { $match: filters },
-        { $sort: distance ? { distance: 1 } : { createdAt: -1 } }
+        {
+            $sort: {
+                "mat_schedules.dayOrder": 1,
+                "mat_schedules.from": 1,
+                distance: 1,
+            },
+        }
+
     );
 
     const gyms = await GYM.aggregate(pipeline);

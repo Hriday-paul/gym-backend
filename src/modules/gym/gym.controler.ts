@@ -248,5 +248,5 @@ export const gymControler = {
     nearMeMats,
     allGymsForApp,
     GymDetails,
-    allGyms
+    allGyms,
 }
