@@ -433,49 +433,6 @@ const allGyms = async (query: Record<string, any>) => {
     };
 }
 
-// add order
-const addOrder = async () => {
-    const gyms = await GYM.updateMany(
-        {},
-        [
-            {
-                $set: {
-                    mat_schedules: {
-                        $map: {
-                            input: "$mat_schedules",
-                            as: "ms",
-                            in: {
-                                $mergeObjects: [
-                                    "$$ms",
-                                    {
-                                        dayOrder: {
-                                            $switch: {
-                                                branches: [
-                                                    { case: { $eq: ["$$ms.day", "Sunday"] }, then: 1 },
-                                                    { case: { $eq: ["$$ms.day", "Monday"] }, then: 2 },
-                                                    { case: { $eq: ["$$ms.day", "Tuesday"] }, then: 3 },
-                                                    { case: { $eq: ["$$ms.day", "Wednesday"] }, then: 4 },
-                                                    { case: { $eq: ["$$ms.day", "Thursday"] }, then: 5 },
-                                                    { case: { $eq: ["$$ms.day", "Friday"] }, then: 6 },
-                                                    { case: { $eq: ["$$ms.day", "Saturday"] }, then: 7 },
-                                                ],
-                                                default: 99,
-                                            },
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                    },
-                },
-            },
-        ]
-    );
-
-    return gyms
-
-}
-
 export const gymService = {
     AddGymByAdmin,
     AddGymByUser,
@@ -487,5 +444,4 @@ export const gymService = {
     allGymsForApp,
     GymDetails,
     allGyms,
-    addOrder
 }
