@@ -399,15 +399,20 @@ const allGymsForApp = async (query: Record<string, any>, userId: string) => {
 
     pipeline.push(
         { $match: filters },
-        {
-            $sort: {
-                "mat_schedules.dayOrder": 1,
-                "mat_schedules.from": 1,
-                distance: 1,
-            },
-        }
-
+        { $sort: distance ? { distance: 1 } : { createdAt: -1 } }
     );
+
+    // 4️⃣ Sort nested mat_schedules by dayOrder → from
+    pipeline.push({
+        $addFields: {
+            mat_schedules: {
+                $sortArray: {
+                    input: "$mat_schedules",
+                    sortBy: { dayOrder: 1, from: 1 },
+                },
+            },
+        },
+    });
 
     const gyms = await GYM.aggregate(pipeline);
     return gyms;
@@ -428,6 +433,49 @@ const allGyms = async (query: Record<string, any>) => {
     };
 }
 
+// add order
+const addOrder = async () => {
+    const gyms = await GYM.updateMany(
+        {},
+        [
+            {
+                $set: {
+                    mat_schedules: {
+                        $map: {
+                            input: "$mat_schedules",
+                            as: "ms",
+                            in: {
+                                $mergeObjects: [
+                                    "$$ms",
+                                    {
+                                        dayOrder: {
+                                            $switch: {
+                                                branches: [
+                                                    { case: { $eq: ["$$ms.day", "Sunday"] }, then: 1 },
+                                                    { case: { $eq: ["$$ms.day", "Monday"] }, then: 2 },
+                                                    { case: { $eq: ["$$ms.day", "Tuesday"] }, then: 3 },
+                                                    { case: { $eq: ["$$ms.day", "Wednesday"] }, then: 4 },
+                                                    { case: { $eq: ["$$ms.day", "Thursday"] }, then: 5 },
+                                                    { case: { $eq: ["$$ms.day", "Friday"] }, then: 6 },
+                                                    { case: { $eq: ["$$ms.day", "Saturday"] }, then: 7 },
+                                                ],
+                                                default: 99,
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+        ]
+    );
+
+    return gyms
+
+}
+
 export const gymService = {
     AddGymByAdmin,
     AddGymByUser,
@@ -439,4 +487,5 @@ export const gymService = {
     allGymsForApp,
     GymDetails,
     allGyms,
+    addOrder
 }
