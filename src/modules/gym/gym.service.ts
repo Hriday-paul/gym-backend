@@ -341,16 +341,6 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
             },
         },
         { $sort: { distance: 1 } },
-        {
-            $addFields: {
-                mat_schedules: {
-                    $sortArray: {
-                        input: "$mat_schedules",
-                        sortBy: { from: 1 },
-                    },
-                },
-            }
-        },
         { $limit: 10 },
     ]);
 
