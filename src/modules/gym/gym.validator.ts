@@ -3,7 +3,7 @@ import { check, query } from "express-validator";
 export const gymAddValidator = [
     check('name').trim().not().isEmpty().withMessage('Name is required!'),
     check('description').trim().optional(),
-    check('email').trim().not().isEmpty().withMessage('Email address is required!').isEmail().normalizeEmail({ all_lowercase: true }).withMessage('Valid email address is required!'),
+    check('email').trim().optional().isEmail().normalizeEmail({ all_lowercase: true }).withMessage('Valid email address is required!'),
     check('phone').optional().trim().isMobilePhone('any').withMessage('Invalid phone number!'), //.isMobilePhone('any').withMessage('Invalid contact number')
 
     check('mat_schedules')
