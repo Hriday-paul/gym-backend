@@ -18,11 +18,13 @@ const allEvents = catchAsync(async (req, res) => {
 
 const addEvent = catchAsync(async (req, res) => {
 
+    console.log(req.body)
+
     if (req.body.gym) {
         //check gym owner
         const gym = await GYM.findById(req.body.gym);
 
-        if (gym?.user.toString() !== req.user?._id) {
+        if (gym?.user.toString() !== req.user?._id && req.user.role !== "admin") {
             throw new AppError(httpStatus.BAD_REQUEST, "You’re not the owner of this gym!")
         }
     }

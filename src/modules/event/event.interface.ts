@@ -13,5 +13,6 @@ export interface IEvent {
     image: { key: string; url: string },
 
     user : ObjectId
-    gym : ObjectId
+    gym : ObjectId,
+    createdAt : Date
 }

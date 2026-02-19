@@ -23,20 +23,20 @@ const allEvents = async (query: Record<string, any>) => {
 }
 
 // -----------------------------event delete schedule------------------
-agenda.define("event close", async (job: any) => {
+agenda.define("eventClose", async (job: any) => {
     try {
         const { eventId } = job.attrs.data;
         await Event.deleteOne({ _id: eventId });
-    } catch (err) {}
+    } catch (err) { }
 });
 
 const addEvent = async (payload: IEvent) => {
     const event = await Event.create(payload);
 
-    const thirdDayUTC = moment(event?.date).add(3, "days").utc().format();
+    const thirdDayUTC = moment(event?.date).add(3, "days").toDate();
 
     // schedule event delete 3 days later
-    await agenda.schedule(thirdDayUTC, "event close", {
+    await agenda.schedule(thirdDayUTC, "eventClose", {
         eventId: event?._id,
     });
 
