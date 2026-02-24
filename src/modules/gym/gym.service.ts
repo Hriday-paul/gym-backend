@@ -275,6 +275,7 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
     const long = query?.long;
 
     const current = Number(hour) * 60 + Number(minute);
+    const distance = query?.distance;
 
     const SIX_HOURS = 6 * 60;
 
@@ -287,16 +288,30 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
         coordinates: [Number(long), Number(lat)], // [longitude, latitude]
     };
 
+    const geoNear: any = {
+        near: userLocation,
+        distanceField: "distance",
+        spherical: true,
+        distanceMultiplier: 0.000621371192 // for get mile
+    };
+
+    if (distance) {
+        geoNear.maxDistance = Number(distance) / 0.000621371192;
+    }
+
     const mats = await GYM.aggregate([
         {
-            $geoNear: {
-                near: userLocation,
-                distanceField: "distance",
-                maxDistance: 50000, // 50km
-                spherical: true,
-                distanceMultiplier: 0.000621371192, // miles
-            },
+            $geoNear: geoNear
         },
+        // {
+        //     $geoNear: {
+        //         near: userLocation,
+        //         distanceField: "distance",
+        //         maxDistance: 50000, // 50km
+        //         spherical: true,
+        //         distanceMultiplier: 0.000621371192, // miles
+        //     },
+        // },
         {
             $match: {
                 status: "approved",
@@ -340,7 +355,7 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
                 to_view: "$mat_schedules.to_view",
             },
         },
-        { $sort: { distance: 1, from : 1 } },
+        { $sort: { distance: 1, from: 1 } },
         { $limit: 10 },
     ]);
 
