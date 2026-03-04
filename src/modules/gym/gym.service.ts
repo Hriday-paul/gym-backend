@@ -16,6 +16,8 @@ import { USER_ROLE } from "../user/user.constants";
 import { matReminderQueue } from "../../queues/matReminder.queue";
 import { MatReminderTemplate } from "../reminder_template/reminder.model";
 
+import moment from "moment-timezone";
+
 const DayOrder = {
     Sunday: 1,
     Monday: 2,
@@ -534,7 +536,7 @@ const scheduleMatReminderForGym = async (gym: IGym) => {
         await scheduleMatReminder(
             gym?._id,
             mat,
-            0 // generate reminder before 2 hour
+            5 // generate reminder before 2 hour
         );
     }
 }
@@ -567,37 +569,70 @@ const scheduleMatReminder = async (
     );
 };
 
-const getNextMatDateTime = (dayOrder: number, from: number, forceNextWeek = false) => {
+const BANGALADESH_TZ = "Asia/Dhaka";
 
-    const getTodayDayOrder = (): number => {
-        const jsDay = new Date().getDay(); // 0–6
-        return jsDay + 1; // convert to 1–7
-    };
+const getNextMatDateTime = (
+    dayOrder: number,
+    from: number,
+    forceNextWeek = false
+): Date => {
+    // Current time in Bangladesh
+    let now = moment().tz(BANGALADESH_TZ);
 
-    const now = new Date();
-
-    const todayOrder = getTodayDayOrder();
-
+    // dayOrder: 1 = Monday, 7 = Sunday
+    const todayOrder = now.isoWeekday(); // 1 (Mon) – 7 (Sun)
     let diff = dayOrder - todayOrder;
 
-    // move to next week if passed
-    if (diff < 0) diff += 7;
+    if (diff < 0) diff += 7; // move to next week if passed
 
-    const matDate = new Date(now);
-    matDate.setDate(now.getDate() + diff);
+    let matDate = now.clone().add(diff, "days");
 
+    // calculate hour and minute from `from` (minutes since midnight)
     const hour = Math.floor(from / 60);
     const minute = from % 60;
 
-    matDate.setHours(hour, minute, 0, 0);
+    matDate.hour(hour).minute(minute).second(0).millisecond(0);
 
-    // ✅ handle same-day past time
-    if (matDate <= now || forceNextWeek) {
-        matDate.setDate(matDate.getDate() + 7);
+    // if same-day passed or forceNextWeek, move 7 days
+    if (matDate.isSameOrBefore(now) || forceNextWeek) {
+        matDate.add(7, "days");
     }
 
-    return matDate;
+    // Return a JS Date object in UTC (BullMQ expects UTC for delays)
+    return matDate.toDate();
 };
+
+// const getNextMatDateTime = (dayOrder: number, from: number, forceNextWeek = false) => {
+
+//     const getTodayDayOrder = (): number => {
+//         const jsDay = new Date().getDay(); // 0–6
+//         return jsDay + 1; // convert to 1–7
+//     };
+
+//     const now = new Date();
+
+//     const todayOrder = getTodayDayOrder();
+
+//     let diff = dayOrder - todayOrder;
+
+//     // move to next week if passed
+//     if (diff < 0) diff += 7;
+
+//     const matDate = new Date(now);
+//     matDate.setDate(now.getDate() + diff);
+
+//     const hour = Math.floor(from / 60);
+//     const minute = from % 60;
+
+//     matDate.setHours(hour, minute, 0, 0);
+
+//     // ✅ handle same-day past time
+//     if (matDate <= now || forceNextWeek) {
+//         matDate.setDate(matDate.getDate() + 7);
+//     }
+
+//     return matDate;
+// };
 
 export const gymService = {
     AddGymByAdmin,
