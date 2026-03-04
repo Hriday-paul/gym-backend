@@ -536,7 +536,7 @@ const scheduleMatReminderForGym = async (gym: IGym) => {
         await scheduleMatReminder(
             gym?._id,
             mat,
-            5 // generate reminder before 2 hour
+            2 // generate reminder before 2 hour
         );
     }
 }
@@ -578,6 +578,8 @@ const getNextMatDateTime = (
 ): Date => {
     // Current time in Bangladesh
     let now = moment().tz(BANGALADESH_TZ);
+
+    console.log("--------------now------------", now);
 
     // dayOrder: 1 = Monday, 7 = Sunday
     const todayOrder = now.isoWeekday(); // 1 (Mon) – 7 (Sun)
