@@ -532,11 +532,9 @@ const scheduleMatReminderForGym = async (gym: IGym) => {
         await scheduleMatReminder(
             gym?._id,
             mat,
-            0 // generate reminder before 2 hour
+            7 // generate reminder before 2 hour
         );
     }
-
-
 }
 
 const scheduleMatReminder = async (
