@@ -106,6 +106,8 @@ export const sendMultipleNotification = async (
 ): Promise<unknown> => {
   try {
 
+    console.log(fcmToken, payload);
+
     // save notification to db
     if (payload?.length > 0) {
       await Notification.insertMany(payload);
@@ -148,6 +150,8 @@ export const sendMultipleNotification = async (
         }
       },
     });
+
+    console.log(response)
 
     // Log any individual token failures
     if (response?.failureCount > 0) {
