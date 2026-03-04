@@ -525,8 +525,6 @@ const allGyms = async (query: Record<string, any>) => {
 
 const scheduleMatReminderForGym = async (gym: IGym) => {
 
-    console.log("-------schedule creating------")
-
     // remove old queue for this gym
     await matReminderQueue.remove(
         `${gym?._id}`
@@ -536,7 +534,7 @@ const scheduleMatReminderForGym = async (gym: IGym) => {
         await scheduleMatReminder(
             gym?._id,
             mat,
-            3 // generate reminder before 2 hour
+            120 // generate reminder before 2 hour
         );
     }
 }
@@ -554,8 +552,6 @@ const scheduleMatReminder = async (
 
     const delay = reminderTime.getTime() - Date.now();
 
-    console.log("-------delay------", delay)
-
     if (delay <= 0) return;
 
     await matReminderQueue.add(
@@ -569,7 +565,7 @@ const scheduleMatReminder = async (
     );
 };
 
-const BANGALADESH_TZ = "Asia/Dhaka";
+const TIME_ZONE = "America/Chicago";
 
 const getNextMatDateTime = (
     dayOrder: number,
@@ -577,11 +573,10 @@ const getNextMatDateTime = (
     forceNextWeek = false
 ): Date => {
     // Current time in Bangladesh
-    let now = moment().tz(BANGALADESH_TZ);
+    let now = moment().tz(TIME_ZONE);
 
     // dayOrder: 1 = Monday, 7 = Sunday
     const todayOrder = now.day() + 1; // 1 (Mon) – 7 (Sun)
-    console.log(todayOrder)
     let diff = dayOrder - todayOrder;
 
     if (diff < 0) diff += 7; // move to next week if passed
