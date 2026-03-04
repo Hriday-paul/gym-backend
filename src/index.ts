@@ -11,7 +11,7 @@ import helmet from "helmet";
 import connectDb from "./config/connectDb";
 import globalErrorHandler from "./middleware/globalErrorhandler";
 import { defaultTask } from "./utils/defaultTask";
-import "../src/workers"
+import "./workers/index"
 dotenv.config();
 
 const app: Express = express();
