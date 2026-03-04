@@ -579,10 +579,8 @@ const getNextMatDateTime = (
     // Current time in Bangladesh
     let now = moment().tz(BANGALADESH_TZ);
 
-    console.log("--------------now------------", now);
-
     // dayOrder: 1 = Monday, 7 = Sunday
-    const todayOrder = now.isoWeekday(); // 1 (Mon) – 7 (Sun)
+    const todayOrder = now.day() + 1; // 1 (Mon) – 7 (Sun)
     console.log(todayOrder)
     let diff = dayOrder - todayOrder;
 
