@@ -523,6 +523,8 @@ const allGyms = async (query: Record<string, any>) => {
 
 const scheduleMatReminderForGym = async (gym: IGym) => {
 
+    console.log("-------schedule creating------")
+
     // remove old queue for this gym
     await matReminderQueue.remove(
         `${gym?._id}`
@@ -549,6 +551,8 @@ const scheduleMatReminder = async (
     const reminderTime = new Date(matStart.getTime() - reminderMinutes * 60000);
 
     const delay = reminderTime.getTime() - Date.now();
+
+    console.log("-------delay------", delay)
 
     if (delay <= 0) return;
 

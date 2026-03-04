@@ -10,6 +10,8 @@ import { connectionInfo } from "../config/redis";
 
 new Worker("mat-reminder", async job => {
 
+    console.log("------mat reminder called------")
+
     const { gymId, matId } = job.data;
 
     const gym = await GYM.findById(gymId);
