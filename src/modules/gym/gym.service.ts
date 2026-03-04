@@ -583,6 +583,7 @@ const getNextMatDateTime = (
 
     // dayOrder: 1 = Monday, 7 = Sunday
     const todayOrder = now.isoWeekday(); // 1 (Mon) – 7 (Sun)
+    console.log(todayOrder)
     let diff = dayOrder - todayOrder;
 
     if (diff < 0) diff += 7; // move to next week if passed
