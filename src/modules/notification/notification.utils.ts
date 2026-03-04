@@ -39,8 +39,8 @@ export const sendNotification = async (
         },
         android: {
           notification: {
-            icon: "http://10.10.10.9:4300/logo.png",
-            imageUrl: "http://10.10.10.9:4300/logo.png",
+            icon: "https://server.thejiujitsuapp.com/logo.png",
+            imageUrl: "https://server.thejiujitsuapp.com/logo.png",
             clickAction: 'notification'
           }
         },
@@ -49,7 +49,7 @@ export const sendNotification = async (
             "apns-push-type": "alert",
           },
           fcmOptions: {
-            imageUrl: 'http://10.10.10.9:4300/logo.png'
+            imageUrl: 'https://server.thejiujitsuapp.com/logo.png'
           },
           payload: {
             aps: {
@@ -60,7 +60,7 @@ export const sendNotification = async (
         },
         webpush: {
           headers: {
-            image: 'http://10.10.10.9:4300/logo.png'
+            image: 'https://server.thejiujitsuapp.com/logo.png'
           }
         },
       });
@@ -105,11 +105,14 @@ export const sendMultipleNotification = async (
   { title, message }: { title: string, message: string }
 ): Promise<unknown> => {
   try {
+
+    // save notification to db
+    if (payload?.length > 0) {
+      await Notification.insertMany(payload);
+    }
+
     if (fcmToken.length <= 0) {
-      throw new AppError(
-        httpStatus.NOT_FOUND,
-        "Token not sent"
-      );
+      return;
     }
 
     const response = await admin.messaging().sendEachForMulticast({
@@ -120,8 +123,8 @@ export const sendMultipleNotification = async (
       },
       android: {
         notification: {
-          icon: "http://10.10.10.9:3000/logo.png",
-          imageUrl: "http://10.10.10.9:3000/logo.png",
+          icon: "https://server.thejiujitsuapp.com/logo.png",
+          imageUrl: "https://server.thejiujitsuapp.com/logo.png",
           clickAction: 'notification'
         }
       },
@@ -130,7 +133,7 @@ export const sendMultipleNotification = async (
           "apns-push-type": "alert",
         },
         fcmOptions: {
-          imageUrl: 'http://10.10.10.9:3000/logo.png'
+          imageUrl: 'https://server.thejiujitsuapp.com/logo.png'
         },
         payload: {
           aps: {
@@ -141,16 +144,10 @@ export const sendMultipleNotification = async (
       },
       webpush: {
         headers: {
-          image: 'http://10.10.10.9:3000/logo.png'
+          image: 'https://server.thejiujitsuapp.com/logo.png'
         }
       },
     });
-
-    // If notifications were successfully sent, log them in the database
-    if (response?.successCount > 0) {
-      await Notification.insertMany(payload)
-
-    }
 
     // Log any individual token failures
     if (response?.failureCount > 0) {

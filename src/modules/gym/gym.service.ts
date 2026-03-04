@@ -1,7 +1,7 @@
 import AppError from "../../error/AppError";
 import { deleteFromS3 } from "../../utils/s3";
 import { User } from "../user/user.models";
-import { IGym } from "./gym.interface";
+import { IGym, ISchedule } from "./gym.interface";
 import { GYM } from "./gym.model";
 import httpstatus from "http-status"
 import { ObjectId } from "mongodb"
@@ -13,6 +13,8 @@ import { startSession } from "mongoose";
 import { IClaimReq } from "../claimRequests/claimRequests.interface";
 import { ClaimReq } from "../claimRequests/claimRequests.model";
 import { USER_ROLE } from "../user/user.constants";
+import { matReminderQueue } from "../../queues/matReminder.queue";
+import { MatReminderTemplate } from "../reminder_template/reminder.model";
 
 const DayOrder = {
     Sunday: 1,
@@ -55,8 +57,12 @@ const AddGymByAdmin = async (payload: IGym, userId: string) => {
         return { day, dayOrder: DayOrder[day], from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
     })
 
-    const res = await GYM.create({ ...payload, isClaimed: false, user: userId, mat_schedules: matschedulesFormat, status: "approved", class_schedules: classchedulesFormat });
-    return res;
+    const gym = await GYM.create({ ...payload, isClaimed: false, user: userId, mat_schedules: matschedulesFormat, status: "approved", class_schedules: classchedulesFormat });
+
+    // schedule mat reminder
+    await scheduleMatReminderForGym(gym);
+
+    return gym;
 }
 
 const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimReq) => {
@@ -81,12 +87,22 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimR
             return { day, dayOrder: DayOrder[day], from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
         })
 
-        const gym = await GYM.create({ ...payload, isClaimed: true, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat });
+        const gym = await GYM.create({ ...payload, isClaimed: true, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat }, { session });
 
-        const claimRequest = await ClaimReq.create({ ...claimPayload, user: user?._id, email: gym?.email, phone: gym?.phone, gym: gym?._id });
+        const claimRequest = await ClaimReq.create(
+            [{
+                ...claimPayload,
+                user: user._id,
+                email: gym[0].email,
+                phone: gym[0].phone,
+                gym: gym[0]._id
+            }],
+            { session }
+        );
+
+        await session.commitTransaction();
 
         const tokenToUse = user?.fcmToken;
-
         sendNotification(tokenToUse ? [tokenToUse] : [], {
             title: "New gym under review",
             message: "Your gym is under review by the admin. It will be approved once the review is complete.",
@@ -96,8 +112,10 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimR
             sender: user._id,
         });
 
-        await session.commitTransaction();
-        return gym;
+        // schedule mat reminder
+        await scheduleMatReminderForGym(gym[0]);
+
+        return gym[0];
 
     } catch (error: any) {
         await session.abortTransaction();
@@ -173,23 +191,68 @@ const GymDetails = async (gymId: string, userId: string) => {
     return gym
 }
 
-const DeleteGym = async (userId: string, gymId: string, role: string) => {
-    const exist = await GYM.findOne({ _id: gymId });
+const DeleteGym = async (
+    userId: string,
+    gymId: string,
+    role: string
+) => {
 
-    if (!exist) {
-        throw new AppError(httpstatus.NOT_FOUND, "Gym not found!")
+    const session = await startSession();
+
+    try {
+        session.startTransaction();
+
+        const exist = await GYM.findOne({ _id: gymId }).session(session);
+
+        if (!exist) {
+            throw new AppError(httpstatus.NOT_FOUND, "Gym not found!");
+        }
+
+        if (
+            exist.user.toString() !== userId &&
+            role !== USER_ROLE.admin
+        ) {
+            throw new AppError(
+                httpstatus.BAD_REQUEST,
+                "You are not owner this gym"
+            );
+        }
+
+        // ✅ delete favourites
+        await Favorites.deleteMany(
+            { gym: gymId },
+            { session }
+        );
+
+        // ✅ delete claim request
+        await ClaimReq.deleteOne(
+            { gym: gymId, user: userId },
+            { session }
+        );
+
+        // ✅ delete gym
+        const res = await GYM.deleteOne(
+            { _id: gymId },
+            { session }
+        );
+
+        await session.commitTransaction();
+
+        // ✅ OUTSIDE transaction
+        await matReminderQueue.remove(`${gymId}`);
+
+        return res;
+
+    } catch (error: any) {
+        await session.abortTransaction();
+        throw new AppError(
+            httpstatus.BAD_GATEWAY,
+            error.message
+        );
+    } finally {
+        session.endSession();
     }
-
-    if (exist.user.toString() !== userId && role !== USER_ROLE.admin) {
-        throw new AppError(httpstatus.BAD_REQUEST, "You are not owner this gym")
-    }
-
-    await Favorites.deleteMany({ gym: gymId })
-    const res = await GYM.deleteOne({ _id: gymId });
-    await ClaimReq.deleteOne({ gym: gymId, user: userId });
-
-    return res;
-}
+};
 
 interface IIGym extends IGym {
     newImages: string[]
@@ -238,7 +301,12 @@ const updateGym = async (payload: IIGym, gymId: string) => {
         };
     }
 
-    const result = await GYM.updateOne({ _id: gymId }, updateQuery)
+    const result = await GYM.findByIdAndUpdate({ _id: gymId }, updateQuery, { new: true });
+
+    if (!result) return;
+
+    // rebuild reminder notification
+    await scheduleMatReminderForGym(result)
 
     return result
 }
@@ -359,6 +427,11 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
         { $limit: 10 },
     ]);
 
+    // update location to user
+    await User.updateOne(
+        { _id: userId },
+        { location: { type: "Point", coordinates: [long, lat] } }
+    );
 
     return mats;
 }
@@ -448,6 +521,82 @@ const allGyms = async (query: Record<string, any>) => {
     };
 }
 
+const scheduleMatReminderForGym = async (gym: IGym) => {
+
+    // remove old queue for this gym
+    await matReminderQueue.remove(
+        `${gym?._id}`
+    );
+
+    for (let mat of gym?.mat_schedules) {
+        await scheduleMatReminder(
+            gym?._id,
+            mat,
+            120 // generate reminder before 2 hour
+        );
+    }
+
+
+}
+
+const scheduleMatReminder = async (
+    gymId: string,
+    mat: ISchedule,
+    reminderMinutes: number,
+    forceNextWeek = false
+) => {
+
+    const matStart = getNextMatDateTime(mat.dayOrder, mat.from, forceNextWeek);
+
+    const reminderTime = new Date(matStart.getTime() - reminderMinutes * 60000);
+
+    const delay = reminderTime.getTime() - Date.now();
+
+    if (delay <= 0) return;
+
+    await matReminderQueue.add(
+        "mat-reminder",
+        { gymId, matId: mat._id },
+        {
+            delay,
+            jobId: `${gymId}`,
+            removeOnComplete: true,
+        }
+    );
+};
+
+const getNextMatDateTime = (dayOrder: number, from: number, forceNextWeek = false) => {
+
+    const getTodayDayOrder = (): number => {
+        const jsDay = new Date().getDay(); // 0–6
+        return jsDay + 1; // convert to 1–7
+    };
+
+    const now = new Date();
+
+    const todayOrder = getTodayDayOrder();
+
+    let diff = dayOrder - todayOrder;
+
+    // move to next week if passed
+    if (diff < 0) diff += 7;
+
+    const matDate = new Date(now);
+    matDate.setDate(now.getDate() + diff);
+
+    const hour = Math.floor(from / 60);
+    const minute = from % 60;
+
+    matDate.setHours(hour, minute, 0, 0);
+
+    // ✅ handle same-day past time
+    if (matDate <= now || forceNextWeek) {
+        matDate.setDate(matDate.getDate() + 7);
+    }
+
+    return matDate;
+};
+
 export const gymService = {
     AddGymByAdmin,
     AddGymByUser,
@@ -459,4 +608,6 @@ export const gymService = {
     allGymsForApp,
     GymDetails,
     allGyms,
+
+    scheduleMatReminder
 }

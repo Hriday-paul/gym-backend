@@ -11,6 +11,7 @@ import { claimReqRouts } from './modules/claimRequests/claimRequests.rout';
 import { dashboardRouts } from './modules/dasboard/dashboard.rout';
 import { favouriteRouts } from './modules/favourites/favourites.rout';
 import { competitionRouts } from './modules/competition/competition.rout';
+import { reminderTempRouts } from './modules/reminder_template/reminder.rout';
 
 const router = express.Router();
 
@@ -62,6 +63,10 @@ const moduleRoutes = [
     {
         path: '/competitions',
         route: competitionRouts,
+    },
+    {
+        path: '/reminder-temp',
+        route: reminderTempRouts,
     },
 ];
 moduleRoutes.forEach(route => router.use(route.path, route.route));

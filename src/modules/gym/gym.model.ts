@@ -3,7 +3,7 @@ import { IClsSchedule, IGym, ISchedule } from "./gym.interface";
 
 const ScheduleSchema = new Schema<ISchedule>({
     day: { type: String, required: true, enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] },
-    dayOrder : { type: Number, required: true, min: 1, max: 7, },
+    dayOrder: { type: Number, required: true, min: 1, max: 7, },
     from: { type: Number, required: true },
     from_view: { type: String, required: true },
     to: { type: Number, required: true },
@@ -11,8 +11,8 @@ const ScheduleSchema = new Schema<ISchedule>({
 });
 
 const ClassScheduleSchema = new Schema<IClsSchedule>({
-    day: { type: String, required: true, enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],  },
-    dayOrder : { type: Number, required: true, min: 1, max: 7, },
+    day: { type: String, required: true, enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], },
+    dayOrder: { type: Number, required: true, min: 1, max: 7, },
     from: { type: Number, required: true },
     from_view: { type: String, required: true },
     to: { type: Number, required: true },
@@ -117,6 +117,5 @@ const GymSchema = new Schema<IGym>(
 );
 
 GymSchema.index({ location: '2dsphere' });
-GymSchema.index({  "mat_schedules.dayOrder": 1,
-  "mat_schedules.from": 1 });
+GymSchema.index({ "mat_schedules.dayOrder": 1, "mat_schedules.from": 1 });
 export const GYM = model<IGym>('gyms', GymSchema);

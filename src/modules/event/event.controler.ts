@@ -18,8 +18,6 @@ const allEvents = catchAsync(async (req, res) => {
 
 const addEvent = catchAsync(async (req, res) => {
 
-    console.log(req.body)
-
     if (req.body.gym) {
         //check gym owner
         const gym = await GYM.findById(req.body.gym);

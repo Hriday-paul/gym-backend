@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import config from ".";
+import { User } from "../modules/user/user.models";
 
 
 const connectDb = async () => {

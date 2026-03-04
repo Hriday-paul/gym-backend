@@ -1,12 +1,12 @@
 import moment from "moment";
 import QueryBuilder from "../../builder/QueryBuilder";
-import agenda from "../../config/agenda";
 import AppError from "../../error/AppError";
 import { deleteFromS3 } from "../../utils/s3";
 import { USER_ROLE } from "../user/user.constants";
 import { IEvent } from "./event.interface";
 import { Event } from "./event.model"
 import httpStatus from "http-status";
+import { eventQueue } from "../../queues/event.queue";
 
 const allEvents = async (query: Record<string, any>) => {
     const eventModel = new QueryBuilder(Event.find(), query)
@@ -22,23 +22,24 @@ const allEvents = async (query: Record<string, any>) => {
     };
 }
 
-// -----------------------------event delete schedule------------------
-agenda.define("eventClose", async (job: any) => {
-    try {
-        const { eventId } = job.attrs.data;
-        await Event.deleteOne({ _id: eventId });
-    } catch (err) { }
-});
-
 const addEvent = async (payload: IEvent) => {
     const event = await Event.create(payload);
 
-    const thirdDayUTC = moment(event?.date).add(3, "days").toDate();
-
     // schedule event delete 3 days later
-    await agenda.schedule(thirdDayUTC, "eventClose", {
-        eventId: event?._id,
-    });
+    const thirdDayUTC = moment(event.date).add(3, "days");
+
+    const delay = thirdDayUTC.diff(moment()); // milliseconds
+
+    await eventQueue.add(
+        "eventClose",
+        { eventId: event._id },
+        {
+            delay: delay > 0 ? delay : 0,
+            jobId: `${event?.id}`,
+            removeOnComplete: true,
+            removeOnFail: true,
+        }
+    );
 
     return event;
 }
@@ -65,7 +66,7 @@ const deleteEvent = async (eventId: string, userId: string, role: string) => {
     await deleteFromS3(exist?.image?.key);
 
     // remove schedule event delete
-    await agenda.cancel({ "data.eventId": eventId });
+    await eventQueue.remove(`${exist?._id}`);
 
     return res;
 }
@@ -107,15 +108,22 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string, rol
     const result = await Event.updateOne({ _id: eventId }, updateFields);
 
     if (date) {
-        // remove schedule event delete
-        await agenda.cancel({ "data.eventId": eventId });
+        // remove old schedule event delete
+        await eventQueue.remove(`${exist?._id}`);
 
         // generate new event
-        const thirdDayUTC = moment(payload.date).add(3, "days").utc().format();
-
-        await agenda.schedule(thirdDayUTC, "event close", {
-            eventId: eventId,
-        });
+        const thirdDayUTC = moment(date).add(3, "days");
+        const delay = thirdDayUTC.diff(moment()); // milliseconds
+        await eventQueue.add(
+            "eventClose",
+            { eventId },
+            {
+                delay: delay > 0 ? delay : 0,
+                jobId: `${eventId}`,
+                removeOnComplete: true,
+                removeOnFail: true,
+            }
+        );
 
     }
 

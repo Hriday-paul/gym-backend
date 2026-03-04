@@ -11,7 +11,7 @@ import helmet from "helmet";
 import connectDb from "./config/connectDb";
 import globalErrorHandler from "./middleware/globalErrorhandler";
 import { defaultTask } from "./utils/defaultTask";
-import agenda from "./config/agenda";
+import "../src/workers"
 dotenv.config();
 
 const app: Express = express();
@@ -30,10 +30,6 @@ app.use(express.static('public'));
 const port = config.port || 3000;
 
 connectDb();
-
-(async () => {
-  await agenda.start();
-})();
 
 defaultTask();
 

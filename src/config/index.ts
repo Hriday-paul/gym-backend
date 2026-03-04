@@ -7,6 +7,12 @@ const stripe = {
   stripe_api_secret: process.env.STRIPE_API_SECRET,
 };
 
+const redis = {
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  password: process.env.REDIS_PASSWORD,
+}
+
 const aws = {
   accessKeyId: process.env.S3_BUCKET_ACCESS_KEY,
   secretAccessKey: process.env.S3_BUCKET_SECRET_ACCESS_KEY,
@@ -39,4 +45,5 @@ export default {
   stripe_key: process.env.STRIPE_API_KEY,
   stripe,
   aws,
+  redis,
 };
