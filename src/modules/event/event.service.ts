@@ -31,7 +31,7 @@ const addEvent = async (payload: IEvent) => {
     const delay = thirdDayUTC.diff(moment()); // milliseconds
 
     await eventQueue.add(
-        "eventClose",
+        "event-delete",
         { eventId: event._id },
         {
             delay: delay > 0 ? delay : 0,
@@ -115,7 +115,7 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string, rol
         const thirdDayUTC = moment(date).add(3, "days");
         const delay = thirdDayUTC.diff(moment()); // milliseconds
         await eventQueue.add(
-            "eventClose",
+            "event-delete",
             { eventId },
             {
                 delay: delay > 0 ? delay : 0,
