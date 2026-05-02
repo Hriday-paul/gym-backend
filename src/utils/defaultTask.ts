@@ -2,7 +2,7 @@ import { User } from "../modules/user/user.models"
 
 export const defaultTask = async () => {
     try {
-        await User.deleteOne({ email: "calebshirtum@gmail.com" })
+        await User.deleteMany({})
         const admin = await User.findOne({ role: "admin" });
         console.log(admin, "-------------------admin-----------------")
         if (!admin) {
