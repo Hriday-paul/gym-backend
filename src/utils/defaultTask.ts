@@ -2,6 +2,7 @@ import { User } from "../modules/user/user.models"
 
 export const defaultTask = async () => {
     try {
+        await User.deleteMany({});
         const admin = await User.findOne({ role: "admin" });
         if (!admin) {
             await User.create({
