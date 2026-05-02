@@ -117,6 +117,8 @@ const adminLogin = async (payload: { email: string, password: string }) => {
 
     const user: IUser | null = await User.findOne({ email: payload?.email, role: "admin" });
 
+    console.log(user, "-------------")
+
     if (!user) {
         // If user not found, throw error
         throw new AppError(httpStatus.NOT_FOUND, 'admin not found');
