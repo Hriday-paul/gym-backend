@@ -125,7 +125,6 @@ const userSchema: Schema<IUser> = new Schema({
     },
     coordinates: {
       type: [Number], // [longitude, latitude]
-      default: []
       // required: true,
     },
   },
