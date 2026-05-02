@@ -143,6 +143,6 @@ const userSchema: Schema<IUser> = new Schema({
 );
 
 
-userSchema.index({ location: '2dsphere' });
+userSchema.index({ location: '2dsphere' }, { sparse: true });
 // User model creation
 export const User = model<IUser, UserModel>('users', userSchema);
