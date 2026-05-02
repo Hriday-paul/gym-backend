@@ -117,19 +117,12 @@ const userSchema: Schema<IUser> = new Schema({
   },
 
   location: {
-    type: {
-      type: String,
-      enum: ['Point'],
-      required: true,
-      default: 'Point',
-    },
-    coordinates: {
-      type: [Number], // [longitude, latitude]
-      // required: true,
-      // default: undefined
-    },
+    type: new Schema({
+      type: { type: String, enum: ['Point'], default: 'Point' },
+      coordinates: { type: [Number] },
+    }, { _id: false }),
+    default: undefined,  // ← key fix: whole field defaults to undefined
   },
-
   fcmToken: {
     type: String,
     required: false,
@@ -143,6 +136,6 @@ const userSchema: Schema<IUser> = new Schema({
 );
 
 
-userSchema.index({ location: '2dsphere' }, { sparse: true });
+userSchema.index({ location: '2dsphere' });
 // User model creation
 export const User = model<IUser, UserModel>('users', userSchema);
