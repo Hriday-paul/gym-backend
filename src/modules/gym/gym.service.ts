@@ -14,7 +14,6 @@ import { IClaimReq } from "../claimRequests/claimRequests.interface";
 import { ClaimReq } from "../claimRequests/claimRequests.model";
 import { USER_ROLE } from "../user/user.constants";
 import { matReminderQueue } from "../../queues/matReminder.queue";
-import { MatReminderTemplate } from "../reminder_template/reminder.model";
 
 import moment from "moment-timezone";
 
@@ -89,7 +88,7 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimR
             return { day, dayOrder: DayOrder[day], from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
         })
 
-        const gym = await GYM.create({ ...payload, isClaimed: true, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat }, { session });
+        const gym = await GYM.create([{ ...payload, isClaimed: true, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat }], { session });
 
         const claimRequest = await ClaimReq.create(
             [{
