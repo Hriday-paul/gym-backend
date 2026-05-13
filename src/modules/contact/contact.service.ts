@@ -2,35 +2,49 @@ import httpStatus from 'http-status';
 import AppError from '../../error/AppError';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { Icontact } from './contact.interface';
-
 import path from 'path';
 import { sendEmail } from '../../utils/mailSender';
 import fs from 'fs';
 import { Contact } from './contact.models';
 import config from '../../config';
+import { notificationQueue } from '../../queues/notification.queue';
+import { notificationJobs } from '../../workers/notification.worker';
+import { emailQueue } from '../../queues/email.queue';
 
-const createContact = async (payload: Icontact) => {
+const createContact = async (payload: Icontact, userId: string) => {
 
   const emailPath = path.join(
-  process.cwd(),
-  'public',
-  'view',
-  'supportEmail.html'
-);
+    process.cwd(),
+    'public',
+    'view',
+    'supportEmail.html'
+  );
 
-  // If 'isApproved' is set to true, send an email
-  await sendEmail(
-    config.nodemailer_host_email!,
-    'Got a support message from Marketplace app.',
-    fs
-      .readFileSync(emailPath, 'utf8')
-      .replace('{{name}}', payload?.name)
-      .replace('{{email}}', payload?.email)
-      .replace('{{details}}', payload?.description)
+  await emailQueue.add(
+    "email",
+    {
+      to: config.nodemailer_host_email,
+      subject: "Got a support message from Jiu Jitsu App.",
+      html: fs
+        .readFileSync(emailPath, 'utf8')
+        .replace('{{name}}', payload?.name)
+        .replace('{{email}}', payload?.email)
+        .replace('{{details}}', payload?.description)
+    },
+    {
+      delay: 0,
+      removeOnComplete: true,
+      removeOnFail: true,
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 2000, // 2s → 4s → 6s
+      },
+    }
   );
 
   const contacts = await Contact.create(payload);
-  
+
 
   if (!contacts) {
     throw new AppError(
@@ -38,6 +52,25 @@ const createContact = async (payload: Icontact) => {
       'Failed to create contact',
     );
   }
+
+  //send notification to admin
+  await notificationQueue.add(
+    notificationJobs.adminNotification,
+    {
+      title: "New Support Message",
+      message: "A user has sent a new support message. Please review and respond.",
+      senderId: userId
+    },
+    {
+      removeOnComplete: true,
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 2000, // 2s → 4s → 8s
+      },
+    }
+  );
+
   return contacts;
 };
 
@@ -74,7 +107,7 @@ const replyContact = async (id: string, message: string) => {
 
 const getAllcontact = async (query: Record<string, any>) => {
   const contactModel = new QueryBuilder(Contact.find(), query)
-    .search(['name','email'])
+    .search(['name', 'email'])
     .filter()
     .paginate()
     .sort();

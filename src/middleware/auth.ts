@@ -11,7 +11,7 @@ const auth = (...userRoles: string[]) => {
         const token = req?.headers?.authorization?.split(' ')[1];
 
         if (!token) {
-            throw new AppError(httpStatus.UNAUTHORIZED, 'you are not authorized!');
+            throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized');
         }
         let decode;
         try {
@@ -20,13 +20,13 @@ const auth = (...userRoles: string[]) => {
                 config.jwt_access_secret as string,
             ) as JwtPayload;
         } catch (err) {
-            throw new AppError(httpStatus.UNAUTHORIZED, 'unauthorized');
+            throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized');
         }
         const { role, userId } = decode;
         const isUserExist = await User.findById(userId);
 
         if (!isUserExist) {
-            throw new AppError(httpStatus.NOT_FOUND, 'user not found');
+            throw new AppError(httpStatus.NOT_FOUND, 'User does not exist');
         }
 
         if (!isUserExist?.isverified) {

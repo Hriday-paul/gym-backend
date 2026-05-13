@@ -10,9 +10,9 @@ import fs from 'fs';
 import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
 import { generateOtp } from "../../utils/otpGenerator"
 import moment from "moment"
-import { sendEmail } from "../../utils/mailSender"
-import { sendNotification } from "../notification/notification.utils"
-
+import { emailQueue } from "../../queues/email.queue"
+import { notificationQueue } from "../../queues/notification.queue"
+import { notificationJobs } from "../../workers/notification.worker"
 
 const createUser = async (payload: IUser) => {
     const { first_name, last_name, email, password = '', contact = '' } = payload
@@ -165,7 +165,11 @@ const adminLogin = async (payload: { email: string, password: string }) => {
 
 const socialLogin = async ({ email, image, first_name }: { email: string, image?: string, first_name: string }) => {
 
-    let user: IUser | null = await User.findOne({ email: email, role: { $ne: "admin" } });
+    let user: IUser | null = await User.findOne({ email: email });
+
+    if (user && user.role == "admin") {
+        throw new AppError(httpStatus.FORBIDDEN, 'Accounts are not allowed to use this login method');
+    }
 
     if (user && !user?.isSocialLogin) {
         // If user not found, throw error
@@ -256,14 +260,25 @@ const changePassword = async (id: string, payload: { oldPassword: string, newPas
     // Send notification if FCM token exists and user notification is unabled
     const tokenToUse = (user?.fcmToken && user?.notification) ? [user?.fcmToken] : [];
 
-    sendNotification(tokenToUse, {
-        title: `Password Changed`,
-        message: `Your account password was changed`,
-        receiver: user._id,
-        receiverEmail: user.email,
-        receiverRole: user.role,
-        sender: user._id,
-    });
+    await notificationQueue.add(
+        notificationJobs.singleNotification,
+        {
+            tokens: tokenToUse,
+            title: "Password Changed",
+            message: "Your account password was changed",
+            receiverId: user._id,
+            receiverEmail: user.email,
+            senderId: user._id
+        },
+        {
+            removeOnComplete: true,
+            attempts: 3,
+            backoff: {
+                type: "exponential",
+                delay: 2000, // 2s → 4s → 8s
+            },
+        }
+    );
 
     return result;
 };
@@ -304,13 +319,26 @@ const forgotPassword = async (email: string) => {
         'forgot_pass_mail.html'
     );
 
-    await sendEmail(
-        user?.email,
-        'Your reset password OTP is',
-        fs
-            .readFileSync(otpEmailPath, 'utf8')
-            .replace('{{otp}}', otp)
-            .replace('{{email}}', user?.email),
+    await emailQueue.add(
+        "email",
+        {
+            to: user?.email,
+            subject: "Your reset password OTP is",
+            html: fs
+                .readFileSync(otpEmailPath, 'utf8')
+                .replace('{{otp}}', otp)
+                .replace('{{email}}', user?.email),
+        },
+        {
+            delay: 0,
+            removeOnComplete: true,
+            removeOnFail: false, // ← keep failed jobs for debugging
+            attempts: 3,
+            backoff: {
+                type: "exponential",
+                delay: 2000, // 2s → 4s → 8s
+            },
+        }
     );
 
     return { email, token };

@@ -6,7 +6,8 @@ import sendResponse from "../../utils/sendResponse";
 import { claimReqService } from "./claimRequests.service";
 import httpStatus from "http-status"
 import path from "path"
-import { sendAdminNotifications } from "../notification/notification.send.admin";
+import { notificationQueue } from "../../queues/notification.queue";
+import { notificationJobs } from "../../workers/notification.worker";
 
 export const AddclaimReq = catchAsync(async (req, res) => {
 
@@ -59,11 +60,22 @@ export const AddclaimReq = catchAsync(async (req, res) => {
     const result = await claimReqService.AddclaimReq(req.body);
 
     //send notification to admin
-    sendAdminNotifications({
-        title: "Gym claim request",
-        message: "A user has requested to claim a gym. Please review the request.",
-        sender: req.user?._id as any,
-    })
+    await notificationQueue.add(
+        notificationJobs.adminNotification,
+        {
+            title : "Gym claim request",
+            message : "A user has requested to claim a gym. Please review the request.",
+            senderId : req.user?._id
+        },
+        {
+            removeOnComplete: true,
+            attempts: 3,
+            backoff: {
+                type: "exponential",
+                delay: 2000, // 2s → 4s → 8s
+            },
+        }
+    );
 
     sendResponse(res, {
         statusCode: httpStatus.OK,

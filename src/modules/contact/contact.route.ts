@@ -11,6 +11,7 @@ router.post(
   '/add',
   createContactValidator,
   req_validator(),
+  auth(USER_ROLE.user),
   contactController.createcontact,
 );
 

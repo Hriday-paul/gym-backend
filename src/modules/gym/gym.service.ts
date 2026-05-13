@@ -8,7 +8,6 @@ import { ObjectId } from "mongodb"
 import httpStatus from "http-status"
 import { Favorites } from "../favourites/favourites.model";
 import QueryBuilder from "../../builder/QueryBuilder";
-import { sendNotification } from "../notification/notification.utils";
 import { startSession } from "mongoose";
 import { IClaimReq } from "../claimRequests/claimRequests.interface";
 import { ClaimReq } from "../claimRequests/claimRequests.model";
@@ -16,6 +15,8 @@ import { USER_ROLE } from "../user/user.constants";
 import { matReminderQueue } from "../../queues/matReminder.queue";
 
 import moment from "moment-timezone";
+import { notificationQueue } from "../../queues/notification.queue";
+import { notificationJobs } from "../../workers/notification.worker";
 
 const DayOrder = {
     Sunday: 1,
@@ -63,6 +64,24 @@ const AddGymByAdmin = async (payload: IGym, userId: string) => {
     // schedule mat reminder
     await scheduleMatReminderForGym(gym);
 
+    //send notification to admin
+    await notificationQueue.add(
+        notificationJobs.adminNotification,
+        {
+            title: "Gym Added by Admin",
+            message: "A new gym has been added by an administrator and is now available in the system.",
+            senderId: userId
+        },
+        {
+            removeOnComplete: true,
+            attempts: 3,
+            backoff: {
+                type: "exponential",
+                delay: 2000, // 2s → 4s → 8s
+            },
+        }
+    );
+
     return gym;
 }
 
@@ -103,15 +122,27 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimR
 
         await session.commitTransaction();
 
+        //send notification to user gym is under review
         const tokenToUse = user?.fcmToken;
-        sendNotification(tokenToUse ? [tokenToUse] : [], {
-            title: "New gym under review",
-            message: "Your gym is under review by the admin. It will be approved once the review is complete.",
-            receiver: user?._id,
-            receiverEmail: payload.email,
-            receiverRole: user.role,
-            sender: user._id,
-        });
+        await notificationQueue.add(
+            notificationJobs.singleNotification,
+            {
+                tokens: tokenToUse,
+                title: "New gym under review",
+                message: "Your gym is under review by the admin. It will be approved once the review is complete.",
+                receiverId: user?._id,
+                receiverEmail: user?.email,
+                senderId: user?._id
+            },
+            {
+                removeOnComplete: true,
+                attempts: 3,
+                backoff: {
+                    type: "exponential",
+                    delay: 2000, // 2s → 4s → 8s
+                },
+            }
+        );
 
         // schedule mat reminder
         await scheduleMatReminderForGym(gym[0]);
@@ -560,6 +591,11 @@ const scheduleMatReminder = async (
             delay,
             jobId: `${gymId}`,
             removeOnComplete: true,
+            attempts: 3,
+            backoff: {
+                type: "exponential",
+                delay: 5000, // 5s → 10s → 20s
+            },
         }
     );
 };

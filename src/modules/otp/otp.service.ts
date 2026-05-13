@@ -8,6 +8,7 @@ import { User } from '../user/user.models';
 import fs from 'fs';
 import path from 'path';
 import { generateOtp } from '../../utils/otpGenerator';
+import { emailQueue } from '../../queues/email.queue';
 
 const verifyOtp = async (token: string, otp: string | number) => {
 
@@ -15,7 +16,7 @@ const verifyOtp = async (token: string, otp: string | number) => {
     throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized');
   }
   let decode;
- 
+
   try {
     decode = jwt.verify(
       token,
@@ -50,7 +51,7 @@ const verifyOtp = async (token: string, otp: string | number) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'OTP did not match');
   }
 
-  const  updateUser = await User.findByIdAndUpdate(
+  const updateUser = await User.findByIdAndUpdate(
     user?._id,
     {
       $set: {
@@ -89,23 +90,23 @@ const resendOtp = async (email: string) => {
   const expiresAt = moment().add(3, 'minute');
 
   const updateOtp = await User.findByIdAndUpdate(
-      user?._id,
-      {
-        $set: {
-          verification: {
-            otp,
-            expiresAt,
-            status: false,
-          },
+    user?._id,
+    {
+      $set: {
+        verification: {
+          otp,
+          expiresAt,
+          status: false,
         },
       },
-      { new: true },
-    );
+    },
+    { new: true },
+  );
 
   if (!updateOtp) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      'Failed to resend OTP. Please try again later',
+      'Failed to send OTP. Please try again later',
     );
   }
 
@@ -118,7 +119,7 @@ const resendOtp = async (email: string) => {
     expiresIn: '3m',
   });
 
-    const otpEmailPath = path.join(
+  const otpEmailPath = path.join(
     process.cwd(),
     'public',
     'view',
@@ -126,14 +127,29 @@ const resendOtp = async (email: string) => {
   );
 
   if (user) {
-    await sendEmail(
-      user?.email,
-      'Your One Time OTP',
-      fs
-        .readFileSync(otpEmailPath, 'utf8')
-        .replace('{{otp}}', otp)
-        .replace('{{email}}', user?.email),
+
+    await emailQueue.add(
+      "email",
+      {
+        to: user?.email,
+        subject: "Your One Time OTP",
+        html: fs
+          .readFileSync(otpEmailPath, 'utf8')
+          .replace('{{otp}}', otp)
+          .replace('{{email}}', user?.email)
+      },
+      {
+        delay: 0,
+        removeOnComplete: true,
+        removeOnFail: true,
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 2000, // 2s → 4s → 6s
+        },
+      }
     );
+
   }
 
   return { token };

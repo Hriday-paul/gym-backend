@@ -7,7 +7,7 @@ const req_validator = () => {
         const validatorRes = validationResult(req);
         if (!validatorRes.isEmpty()) {
             return res.status(400).send({
-                message: validatorRes.array()[0]?.msg || "Please fill in all required fields!",
+                message: validatorRes.array()[0]?.msg || "All required fields must be filled out.",
                 errors: validatorRes.array().map((error) => error?.msg)
             });
         }

@@ -6,7 +6,8 @@ import { IClaimReq } from "./claimRequests.interface";
 import { ClaimReq } from "./claimRequests.model";
 import httpstatus from "http-status"
 import { IUser } from "../user/user.interface";
-import { sendNotification } from "../notification/notification.utils";
+import { notificationQueue } from "../../queues/notification.queue";
+import { notificationJobs } from "../../workers/notification.worker";
 
 const AddclaimReq = async (payload: IClaimReq) => {
 
@@ -67,16 +68,27 @@ const ApproveClaimReq = async (claimId: string) => {
 
         const user = exist?.user as unknown as IUser
 
+        // send notification to user req is approved
         const tokenToUse = user?.fcmToken;
-
-        sendNotification(tokenToUse ? [tokenToUse] : [], {
-            title: `Your gym request has been approved!`,
-            message: `Your request to claim gym has been approved! It will be visible under “my gyms”.`,
-            receiver: user?._id,
-            receiverEmail: user?.email,
-            receiverRole: user.role,
-            sender: user._id,
-        });
+        await notificationQueue.add(
+            notificationJobs.singleNotification,
+            {
+                tokens: tokenToUse,
+                title: `Your gym request has been approved!`,
+                message: `Your request to claim gym has been approved! It will be visible under “my gyms”.`,
+                receiverId: user?._id,
+                receiverEmail: user?.email,
+                senderId: user._id
+            },
+            {
+                removeOnComplete: true,
+                attempts: 3,
+                backoff: {
+                    type: "exponential",
+                    delay: 2000, // 2s → 4s → 8s
+                },
+            }
+        );
 
         return null;
 
@@ -109,16 +121,28 @@ const RejectClaimReq = async (claimId: string) => {
 
     const user = exist?.user as unknown as IUser
 
+    // send notification user gym request is rejected
     const tokenToUse = user?.fcmToken;
 
-    sendNotification(tokenToUse ? [tokenToUse] : [], {
-        title: `Your gym request has been rejected!`,
-        message: `Unfortunately, your request to claim gym has been rejected. Please provide valid documents and information for verification purposes!`,
-        receiver: user?._id,
-        receiverEmail: user?.email,
-        receiverRole: user.role,
-        sender: user._id,
-    });
+    await notificationQueue.add(
+        notificationJobs.singleNotification,
+        {
+            tokens: tokenToUse,
+            title: "Your gym request has been rejected!",
+            message: "Unfortunately, your request to claim gym has been rejected. Please provide valid documents and information for verification purposes!",
+            receiverId: user?._id,
+            receiverEmail: user?.email,
+            senderId: user._id
+        },
+        {
+            removeOnComplete: true,
+            attempts: 3,
+            backoff: {
+                type: "exponential",
+                delay: 2000, // 2s → 4s → 8s
+            },
+        }
+    );
 
 }
 

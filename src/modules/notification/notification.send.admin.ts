@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {ObjectId as mongoId} from "mongodb"
-import { sendNotification } from "./notification.utils";
+import { ObjectId as mongoId } from "mongodb"
 import { User } from "../user/user.models";
+import { notificationQueue } from "../../queues/notification.queue";
+import { notificationJobs } from "../../workers/notification.worker";
 
 export interface IAdminSendNotificationPayload {
   sender: mongoId;
@@ -24,17 +25,26 @@ export const sendAdminNotifications = async (
     return;
   }
 
-  const fcmToken = (admin?.fcmToken && admin?.notification) ? [admin?.fcmToken] : []
+  const tokenToUse = (admin?.fcmToken && admin?.notification) ? [admin?.fcmToken] : []
 
-  sendNotification(fcmToken, {
-    sender: payload.sender,
-    receiver: admin?._id as any,
-    receiverEmail: admin?.email,
-    receiverRole: "admin",
-    title: payload.title,
-    message: payload.message,
-    type: payload.type as any,
-    link: payload.link,
-  });
+  await notificationQueue.add(
+    notificationJobs.singleNotification,
+    {
+      tokens: tokenToUse,
+      title: payload.title,
+      message: payload.message,
+      receiverId: admin?._id,
+      receiverEmail: admin?.email,
+      senderId: admin?._id
+    },
+    {
+      removeOnComplete: true,
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 2000, // 2s → 4s → 8s
+      },
+    }
+  );
 
 };

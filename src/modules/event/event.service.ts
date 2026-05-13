@@ -38,6 +38,11 @@ const addEvent = async (payload: IEvent) => {
             jobId: `${event?.id}`,
             removeOnComplete: true,
             removeOnFail: true,
+            attempts: 3,
+            backoff: {
+                type: "exponential",
+                delay: 5000, // 5s → 10s → 20s
+            },
         }
     );
 
@@ -122,6 +127,11 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string, rol
                 jobId: `${eventId}`,
                 removeOnComplete: true,
                 removeOnFail: true,
+                attempts: 3,
+                backoff: {
+                    type: "exponential",
+                    delay: 5000, // 5s → 10s → 20s
+                },
             }
         );
 
