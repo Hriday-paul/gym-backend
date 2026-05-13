@@ -163,7 +163,7 @@ const adminLogin = async (payload: { email: string, password: string }) => {
 };
 
 
-const socialLogin = async ({ email, image, first_name }: { email: string, image ?: string, first_name: string }) => {
+const socialLogin = async ({ email, image, first_name }: { email: string, image?: string, first_name: string }) => {
 
     let user: IUser | null = await User.findOne({ email: email, role: { $ne: "admin" } });
 
@@ -180,10 +180,11 @@ const socialLogin = async ({ email, image, first_name }: { email: string, image 
             throw new AppError(httpStatus.FORBIDDEN, 'Your account is deleted');
         }
 
-        const body: any = { email, first_name, isverified: true, isSocialLogin: true }
+        const body: any = { email, isverified: true, isSocialLogin: true }
 
         if (!user) {
             body.image = image
+            body.first_name = first_name
         }
 
         user = await User.findOneAndUpdate({ email }, body, { upsert: true, new: true }) as IUser;
