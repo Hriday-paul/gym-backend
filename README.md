@@ -1,39 +1,86 @@
-# GYM application Backend
-=======
-# Setup -- TypeScript x Express x Node.js
+# 🏋🏽 Jiu Jitsu App — Backend API 💪🏼
 
-## Prerequisites
+A production-ready RESTful backend for a Jiu Jitsu App Android application. Supports multi-gym management, mat & class scheduling, geolocation-based gym discovery, events, user belt progression, achievements, follow system, and real-time push notifications via Firebase + BullMQ.
 
-Before you begin, ensure you have the following installed on your machine:
+## ✨ Features
 
-- [Node.js](https://nodejs.org/): Ensure that Node.js, preferably version 16 or higher, is installed on your system, as this project utilizes the latest versions of TypeScript and Nodemon.
-- [npm](https://www.npmjs.com/): npm is the package manager for Node.js and comes with the Node.js installation.
+### 🏟 Gyms
+- Browse all gyms with full details (name, address, photos, description, contact)
+- **Near Me** — discover gyms by proximity using geospatial queries
+- Gym location pins on a map (coordinates served to Android Google Maps SDK)
+- Follow / Unfollow gyms
+- Each gym has multiple **Mats** (training areas) and independent schedules
 
-## Usage
+### 🗓 Mat & Class Scheduling
+- Each mat can have its own recurring or one-off schedule
+- **Upcoming mat sessions** filtered by user's followed gyms and location
+- **Start reminders** — push notifications sent before a mat session begins (via BullMQ delayed jobs)
+- Class types: Open Mat, Gi, No-Gi, Competition Training, Kids, etc.
 
-For development purposes, you can run the application using Nodemon to automatically restart the server when changes are detected. Execute the following command:
+### 🎉 Events
+- Create and manage gym events
+- Event details
 
-```
+### 👤 User Profile
+- Current belt rank (White → Black) with stripe tracking
+- Recent achievements (e.g. "First Stripe", "Tournament Win", "10 Classes Streak")
+- Followed gyms list
+- Upcoming mat session reminders
+
+### 🔔 Notifications
+- Firebase Cloud Messaging (FCM) for push notifications
+- BullMQ queues for scheduled/delayed notifications (mat reminders, event reminders)
+- Nodemailer for transactional emails (OTP, welcome, password reset)
+
+### 🛡 Admin Panel API
+- Gym CRUD — create, update, delete gyms
+- Mat & Schedule management
+- Event management
+- User management (view, role assignment, belt updates)
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Runtime | Node.js v18+ |
+| Framework | Express.js |
+| Database | MongoDB (Mongoose ODM) |
+| Authentication | JWT + Refresh Tokens |
+| Push Notifications | Firebase Admin SDK (FCM) |
+| Notification Queue | BullMQ + Redis |
+| Email | Nodemailer (SMTP) |
+| File Storage | AWS S3 |
+| Geolocation | MongoDB 2dsphere indexes |
+| Rate Limiting | express-rate-limit |
+| Validation | express-validator |
+| Containerization | Docker + Docker Compose |
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js v18+
+- MongoDB 6+ (local or Atlas)
+- Redis 7+ (required for BullMQ)
+- Firebase project with FCM enabled
+- npm or yarn
+
+### Installation
+
+```bash
+
+# 1. Install dependencies
+npm install
+
+# 2. Set up environment variables
+cp .env.example .env
+# Edit .env with your credentials
+
+# 3. Start development server
 npm run dev
 ```
 
-This will start the server at `http://localhost:3000` by default. You can change the port in the `src/index.ts` file or create an `.env` file to manage the environt-specific variables separately.
-
-For production, you can build the TypeScript files and then start the server. Run the following commands:
-
-```
-npm run build
-npm start
-```
-
-## Project Structure
-
-The project structure is organized as follows:
-
-- `src`: Contains TypeScript source files
-    - `index.ts`: Configures and starts the Express application
-- `dist`: Output directory created during build for compiled TypeScript files
-- `package.json`: Project configuration and dependencies
-- `tsconfig.json`: TypeScript configuration
-
-You can customize the project configuration i nthe `tsconfig.json` file and adjust the server settings in the `src/index.ts` file.
+Server starts at: `http://localhost:3000`

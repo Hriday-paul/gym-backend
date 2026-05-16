@@ -83,7 +83,7 @@ const resendOtp = async (email: string) => {
   const user = await User.findOne({ email })
 
   if (!user) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'User not found');
+    throw new AppError(httpStatus.BAD_REQUEST, 'User does not exist');
   }
 
   const otp = generateOtp();

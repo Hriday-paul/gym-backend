@@ -50,15 +50,19 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
 
     if (!user) {
         // If user not found, throw error
-        throw new AppError(httpStatus.NOT_FOUND, 'Account not found');
+        throw new AppError(httpStatus.NOT_FOUND, 'Account does not exist');
+    }
+    if (user && user?.isSocialLogin) {
+        // If user not found, throw error
+        throw new AppError(httpStatus.FORBIDDEN, 'Your account is connected to a social login account.');
     }
     else {
         if (!user?.status) {
-            throw new AppError(httpStatus.FORBIDDEN, 'Your account is blocked');
+            throw new AppError(httpStatus.FORBIDDEN, 'Your account has been blocked');
         }
 
         if (user?.isDeleted) {
-            throw new AppError(httpStatus.FORBIDDEN, 'Your account is deleted');
+            throw new AppError(httpStatus.FORBIDDEN, 'Your account has been deleted');
         }
 
         if (!user?.isverified) {
@@ -119,11 +123,11 @@ const adminLogin = async (payload: { email: string, password: string }) => {
 
     if (!user) {
         // If user not found, throw error
-        throw new AppError(httpStatus.NOT_FOUND, 'admin not found');
+        throw new AppError(httpStatus.NOT_FOUND, 'Admin does not exist');
     } else {
 
         if (!user?.isverified) {
-            throw new AppError(httpStatus.FORBIDDEN, 'Your account is not verified');
+            throw new AppError(httpStatus.FORBIDDEN, 'Your account has not been verified!');
         }
 
         // Handle verify password
@@ -173,15 +177,15 @@ const socialLogin = async ({ email, image, first_name }: { email: string, image?
 
     if (user && !user?.isSocialLogin) {
         // If user not found, throw error
-        throw new AppError(httpStatus.FORBIDDEN, 'You account is connected by another login system');
+        throw new AppError(httpStatus.FORBIDDEN, 'Your account is connected by another login system');
     } else {
 
         if (user && !user?.status) {
-            throw new AppError(httpStatus.FORBIDDEN, 'Your account is blocked');
+            throw new AppError(httpStatus.FORBIDDEN, 'Your account has been blocked');
         }
 
         if (user && user?.isDeleted) {
-            throw new AppError(httpStatus.FORBIDDEN, 'Your account is deleted');
+            throw new AppError(httpStatus.FORBIDDEN, 'Your account has been deleted');
         }
 
         const body: any = { email, isverified: true, isSocialLogin: true }
@@ -227,7 +231,7 @@ const socialLogin = async ({ email, image, first_name }: { email: string, image?
 const changePassword = async (id: string, payload: { oldPassword: string, newPassword: string, confirmPassword: string }) => {
     const user = await User.findById(id);
     if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+        throw new AppError(httpStatus.NOT_FOUND, 'User does not exist');
     }
 
     const passwordMatched = await bcrypt.compare(payload?.oldPassword, user?.password);
@@ -289,7 +293,7 @@ const forgotPassword = async (email: string) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+        throw new AppError(httpStatus.NOT_FOUND, 'User does not exist');
     }
 
     const jwtPayload = {
@@ -405,7 +409,7 @@ const refreshToken = async (token: string) => {
     const user = await User.findById(userId);
 
     if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+        throw new AppError(httpStatus.NOT_FOUND, 'User does not exist');
     }
     const isDeleted = user?.isDeleted;
 
