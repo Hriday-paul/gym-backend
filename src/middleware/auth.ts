@@ -11,7 +11,7 @@ const auth = (...userRoles: string[]) => {
         const token = req?.headers?.authorization?.split(' ')[1];
 
         if (!token) {
-            throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized');
+            throw new AppError(httpStatus.UNAUTHORIZED, 'You don’t have permission to continue. Please log in again.');
         }
         let decode;
         try {
@@ -20,7 +20,7 @@ const auth = (...userRoles: string[]) => {
                 config.jwt_access_secret as string,
             ) as JwtPayload;
         } catch (err) {
-            throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized');
+            throw new AppError(httpStatus.UNAUTHORIZED, 'You don’t have permission to continue. Please log in again.');
         }
         const { role, userId } = decode;
         const isUserExist = await User.findById(userId);
@@ -30,19 +30,19 @@ const auth = (...userRoles: string[]) => {
         }
 
         if (!isUserExist?.isverified) {
-            throw new AppError(httpStatus.UNAUTHORIZED, 'You are not verifiend');
+            throw new AppError(httpStatus.UNAUTHORIZED, 'Your account has not been verified!');
         }
 
         if (isUserExist?.isDeleted) {
-            throw new AppError(httpStatus.FORBIDDEN, 'Your account is deleted');
+            throw new AppError(httpStatus.FORBIDDEN, 'Your account has been deleted');
         }
 
         if (isUserExist?.status == 0) {
-            throw new AppError(httpStatus.FORBIDDEN, 'Your account is blocked');
+            throw new AppError(httpStatus.FORBIDDEN, 'Your account has been blocked');
         }
 
         if (userRoles && !userRoles.includes(role)) {
-            throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized');
+            throw new AppError(httpStatus.UNAUTHORIZED, 'You don’t have permission to continue. Please log in again.');
         }
 
         req.user = { _id: userId, role };

@@ -356,7 +356,7 @@ const resetPassword = async (token: string, payload: { newPassword: string, conf
     } catch (err) {
         throw new AppError(
             httpStatus.UNAUTHORIZED,
-            'Session has expired. Please try again',
+            'Your session has expired. Please try again',
         );
     }
 
@@ -365,18 +365,18 @@ const resetPassword = async (token: string, payload: { newPassword: string, conf
     );
 
     if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+        throw new AppError(httpStatus.NOT_FOUND, 'User does not exist');
     }
     if (new Date() > user?.verification?.expiresAt) {
-        throw new AppError(httpStatus.FORBIDDEN, 'Session has expired');
+        throw new AppError(httpStatus.FORBIDDEN, 'Your session has expired. Please request a new OTP and try again');
     }
     if (!user?.verification?.status) {
-        throw new AppError(httpStatus.FORBIDDEN, 'One time password has not been verified.');
+        throw new AppError(httpStatus.FORBIDDEN, 'Your OTP has not been verified yet. Please verify it to continue');
     }
     if (payload?.newPassword !== payload?.confirmPassword) {
         throw new AppError(
             httpStatus.BAD_REQUEST,
-            'New password and confirm password do not match',
+            'New password and confirm password don’t match',
         );
     }
 

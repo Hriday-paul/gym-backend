@@ -13,7 +13,7 @@ import { emailQueue } from '../../queues/email.queue';
 const verifyOtp = async (token: string, otp: string | number) => {
 
   if (!token) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized');
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Authentication required. Please try again to continue.');
   }
   let decode;
 
@@ -24,8 +24,8 @@ const verifyOtp = async (token: string, otp: string | number) => {
     ) as JwtPayload;
   } catch (err) {
     throw new AppError(
-      httpStatus.FORBIDDEN,
-      'Session has expired. Please try to submit OTP within 3 minute',
+      httpStatus.UNAUTHORIZED,
+      'Your session has expired. Please request a new OTP and try again.'
     );
   }
 
@@ -34,21 +34,21 @@ const verifyOtp = async (token: string, otp: string | number) => {
   );
 
   if (!user) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'User not found');
+    throw new AppError(httpStatus.BAD_REQUEST, 'User does not exist');
   }
   if (new Date() > user?.verification?.expiresAt) {
     throw new AppError(
-      httpStatus.FORBIDDEN,
-      'OTP has expired. Please resend it',
+      httpStatus.UNAUTHORIZED,
+      'Your OTP session has expired. Please request a new OTP.'
     );
   }
 
   if (user?.verification?.status) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'You already verified, need to login');
+    throw new AppError(httpStatus.BAD_REQUEST, 'You are already verified. Please sign in to continue.');
   }
 
   if (Number(otp) !== Number(user?.verification?.otp)) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'OTP did not match');
+    throw new AppError(httpStatus.BAD_REQUEST, 'The OTP you entered is incorrect. Please try again.');
   }
 
   const updateUser = await User.findByIdAndUpdate(
@@ -106,7 +106,7 @@ const resendOtp = async (email: string) => {
   if (!updateOtp) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      'Failed to send OTP. Please try again later',
+      'Unable to send OTP. Please try again later.'
     );
   }
 
