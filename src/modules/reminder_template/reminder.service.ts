@@ -3,11 +3,9 @@ import { MatReminderTemplate } from "./reminder.model"
 
 const updateReminderTemplate = async (payload: IMatReminderTemplate) => {
 
-    await MatReminderTemplate.deleteMany({});
+    const result = await MatReminderTemplate.updateOne({ name: payload?.name }, { ...payload, name: "template" }, { upsert: true })
 
-    // const result = await MatReminderTemplate.updateOne({ name: payload?.name }, { ...payload, name: "template" }, { upsert: true })
-
-    return  {
+    return result ?? {
         title: "",
         message: "",
         hour: null
