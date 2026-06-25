@@ -6,6 +6,7 @@ const ReminderSchema = new Schema<IMatReminderTemplate>(
         name: {
             type: String,
             required: true,
+            enum: ["template"],
             default: "template"
         },
         title: {
