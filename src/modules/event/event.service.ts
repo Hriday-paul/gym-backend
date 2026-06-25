@@ -25,26 +25,29 @@ const allEvents = async (query: Record<string, any>) => {
 const addEvent = async (payload: IEvent) => {
     const event = await Event.create(payload);
 
-    // schedule event delete 3 days later
-    const thirdDayUTC = moment(event.date).add(3, "days");
+    if (event.date) {
 
-    const delay = thirdDayUTC.diff(moment()); // milliseconds
+        // schedule event delete 3 days later
+        const thirdDayUTC = moment(event.date).add(3, "days");
 
-    await eventQueue.add(
-        "event-delete",
-        { eventId: event._id },
-        {
-            delay: delay > 0 ? delay : 0,
-            jobId: `${event?.id}`,
-            removeOnComplete: true,
-            removeOnFail: true,
-            attempts: 3,
-            backoff: {
-                type: "exponential",
-                delay: 5000, // 5s → 10s → 20s
-            },
-        }
-    );
+        const delay = thirdDayUTC.diff(moment()); // milliseconds
+
+        await eventQueue.add(
+            "event-delete",
+            { eventId: event._id },
+            {
+                delay: delay > 0 ? delay : 0,
+                jobId: `${event?.id}`,
+                removeOnComplete: true,
+                removeOnFail: true,
+                attempts: 3,
+                backoff: {
+                    type: "exponential",
+                    delay: 5000, // 5s → 10s → 20s
+                },
+            }
+        );
+    }
 
     return event;
 }
@@ -59,7 +62,7 @@ const deleteEvent = async (eventId: string, userId: string, role: string) => {
     const exist = await Event.findById(eventId);
 
     if (!exist) {
-        throw new AppError(httpStatus.NOT_FOUND, "Event not found");
+        throw new AppError(httpStatus.NOT_FOUND, "Event does not exist!");
     }
 
     if (exist.user.toString() !== userId && role !== USER_ROLE.admin) {
@@ -68,10 +71,15 @@ const deleteEvent = async (eventId: string, userId: string, role: string) => {
 
     const res = await Event.deleteOne({ _id: eventId });
 
-    await deleteFromS3(exist?.image?.key);
+    deleteFromS3(exist?.image?.key);
 
-    // remove schedule event delete
-    await eventQueue.remove(`${exist?._id}`);
+    //check queue for existing job and remove it
+    const existingJob = await eventQueue.getJob(`${exist?._id}`);
+
+    if (existingJob) {
+        // remove schedule event delete
+        await eventQueue.remove(`${exist?._id}`);
+    }
 
     return res;
 }
@@ -81,7 +89,7 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string, rol
     const exist = await Event.findById(eventId)
 
     if (!exist) {
-        throw new AppError(httpStatus.NOT_FOUND, "Event not found");
+        throw new AppError(httpStatus.NOT_FOUND, "Event does not exist!");
     }
 
     if (exist.user.toString() !== userId && role !== USER_ROLE.admin) {
@@ -112,11 +120,18 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string, rol
 
     const result = await Event.updateOne({ _id: eventId }, updateFields);
 
+    // check if the date & time has changed, if yes then reschedule the event delete job
     if (date) {
-        // remove old schedule event delete
-        await eventQueue.remove(`${exist?._id}`);
 
-        // generate new event
+        //check queue for existing job and remove it
+        const existingJob = await eventQueue.getJob(`${exist?._id}`);
+
+        if (existingJob) {
+            // remove old schedule event delete
+            await eventQueue.remove(`${exist?._id}`);
+        }
+
+        // generate new schedule event delete
         const thirdDayUTC = moment(date).add(3, "days");
         const delay = thirdDayUTC.diff(moment()); // milliseconds
         await eventQueue.add(

@@ -4,7 +4,6 @@ import { eventService } from "./event.service";
 import sendResponse from "../../utils/sendResponse";
 import { uploadToS3 } from "../../utils/s3";
 import AppError from "../../error/AppError";
-import { GYM } from "../gym/gym.model";
 
 const allEvents = catchAsync(async (req, res) => {
     const result = await eventService.allEvents(req.query)
@@ -17,15 +16,6 @@ const allEvents = catchAsync(async (req, res) => {
 })
 
 const addEvent = catchAsync(async (req, res) => {
-
-    if (req.body.gym) {
-        //check gym owner
-        const gym = await GYM.findById(req.body.gym);
-
-        if (gym?.user.toString() !== req.user?._id && req.user.role !== "admin") {
-            throw new AppError(httpStatus.BAD_REQUEST, "You’re not the owner of this gym!")
-        }
-    }
 
     let image;
 

@@ -3,17 +3,16 @@ import { IEvent } from './event.interface';
 
 const EventSchema: Schema<IEvent> = new Schema(
     {
-        type: { type: String, required: true },
+        type: { type: String },
         name: { type: String, required: true },
-        venue: { type: String, required: true },
+        venue: { type: String },
         state: { type: String },
         city: { type: String },
-        date: { type: Date, required: true },
+        date: { type: Date },
         duration: { type: String },
         registration_fee: { type: Number, default: 0 },
         event_website: { type: String },
         user: { type: Schema.Types.ObjectId, ref: "users", required: true },
-        gym: { type: Schema.Types.ObjectId, ref: "gyms" },
         image: {
             type: {
                 key: {
