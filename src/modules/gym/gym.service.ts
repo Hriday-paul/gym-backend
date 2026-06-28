@@ -37,6 +37,16 @@ type Day =
     | "Friday"
     | "Saturday";
 
+const NextDay: Record<Day, Day> = {
+    Sunday: "Monday",
+    Monday: "Tuesday",
+    Tuesday: "Wednesday",
+    Wednesday: "Thursday",
+    Thursday: "Friday",
+    Friday: "Saturday",
+    Saturday: "Sunday",
+}
+
 
 export const muniteNumber_to_time = (minute: number) => {
     const hour = Math.floor(minute / 60);
@@ -377,7 +387,8 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
     const current = Number(hour) * 60 + Number(minute);
     const distance = query?.distance;
 
-    const SIX_HOURS = 6 * 60;
+    const MINUTES_IN_DAY = 24 * 60; // 1440
+    const NEXT_HOURS = 12 * 60; // will start mat next 12 hour
 
     if (!lat || !long) {
         return []
@@ -398,6 +409,12 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
     if (distance) {
         geoNear.maxDistance = Number(distance) / 0.000621371192;
     }
+
+    const endTime = current + NEXT_HOURS;
+    const spillsIntoNextDay = endTime >= MINUTES_IN_DAY;
+
+    const nextDay = NextDay[day as Day];
+    const nextDayEndTime = endTime - MINUTES_IN_DAY;
 
     const mats = await GYM.aggregate([
         {
@@ -421,23 +438,44 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
             $unwind: "$mat_schedules",
         },
         {
-            $match: {
-                "mat_schedules.day": day,
-                $or: [
-                    // currently open
-                    {
-                        "mat_schedules.from": { $lte: current },
-                        "mat_schedules.to": { $gte: current },
-                    },
-                    // starts within next 6 hours
-                    {
-                        "mat_schedules.from": {
-                            $gt: current,
-                            $lte: current + SIX_HOURS,
+            $match: spillsIntoNextDay
+                ? {
+                    $or: [
+                        // Current day: open now OR starts before midnight
+                        {
+                            "mat_schedules.day": day,
+                            $or: [
+                                // currently open
+                                {
+                                    "mat_schedules.from": { $lte: current },
+                                    "mat_schedules.to": { $gte: current },
+                                },
+                                // starts between now and midnight
+                                {
+                                    "mat_schedules.from": { $gt: current },
+                                },
+                            ],
                         },
-                    },
-                ],
-            },
+                        // Next day: starts between midnight and remainder of 6-hour window
+                        {
+                            "mat_schedules.day": nextDay,
+                            "mat_schedules.from": { $lte: nextDayEndTime },
+                        },
+                    ],
+                }
+                : {
+                    // Normal case: everything within the same day
+                    "mat_schedules.day": day,
+                    $or: [
+                        {
+                            "mat_schedules.from": { $lte: current },
+                            "mat_schedules.to": { $gte: current },
+                        },
+                        {
+                            "mat_schedules.from": { $gt: current, $lte: endTime },
+                        },
+                    ],
+                }
         },
         {
             $project: {
@@ -456,7 +494,7 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
             },
         },
         { $sort: { distance: 1, from: 1 } },
-        { $limit: 10 },
+        // { $limit: 10 },
     ]);
 
     // update location to user

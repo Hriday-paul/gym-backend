@@ -152,12 +152,12 @@ export const nearGymValidator = [
         .withMessage('Invalid day'),
 
     query("hour").notEmpty()
-        .withMessage('hour time is required')
+        .withMessage('Your current hour is required')
         .isInt({ min: 1, max: 24 })
         .withMessage('Invalid hour time'),
 
     query("minute").notEmpty()
-        .withMessage('minute time is required')
+        .withMessage('Your current minute is required')
         .isInt({ min: 0, max: 60 })
         .withMessage('Invalid minute time'),
 
