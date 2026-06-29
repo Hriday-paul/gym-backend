@@ -6,10 +6,11 @@ import { eventControler } from "./event.controler";
 import { newEventAddValidator, updateEventValidator } from "./event.validator";
 import { image_Upload } from "../../utils/s3";
 import parseData from "../../middleware/parseData";
+import { allMatsvalidator } from "../gym/gym.validator";
 
 const router = Router();
 
-router.get("/", eventControler.allEvents)
+router.get("/", allMatsvalidator, req_validator(), eventControler.allEvents);
 
 router.post("/",
     auth(USER_ROLE.user, USER_ROLE.admin),

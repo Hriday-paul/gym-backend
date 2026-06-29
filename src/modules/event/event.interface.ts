@@ -15,4 +15,9 @@ export interface IEvent {
     user : ObjectId
     gym : ObjectId,
     createdAt : Date
+
+    location: { type: string, coordinates: number[] },
+    street : string
+    zip_code : string
+    apartment ?: string
 }

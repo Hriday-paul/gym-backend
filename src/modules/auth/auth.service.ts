@@ -117,7 +117,7 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
 };
 
 //admin login
-const adminLogin = async (payload: { email: string, password: string }) => {
+const adminLogin = async (payload: { email: string, password: string, fcmToken?: string }) => {
 
     const user: IUser | null = await User.findOne({ email: payload?.email, role: "admin" });
 
@@ -137,6 +137,13 @@ const adminLogin = async (payload: { email: string, password: string }) => {
             throw new AppError(httpStatus.BAD_REQUEST, 'Please check your credentials and try again');
         }
 
+        // Update FCM token if provided
+        if (payload.fcmToken) {
+            await User.updateOne(
+                { _id: user._id },
+                { fcmToken: payload.fcmToken }
+            )
+        }
     }
 
     const userDoc = (user as any).toObject();
@@ -167,7 +174,7 @@ const adminLogin = async (payload: { email: string, password: string }) => {
 };
 
 
-const socialLogin = async ({ email, image, first_name }: { email: string, image?: string, first_name: string }) => {
+const socialLogin = async ({ email, image, first_name, fcmToken }: { email: string, image?: string, first_name: string, fcmToken?: string }) => {
 
     let user: IUser | null = await User.findOne({ email: email });
 
@@ -193,6 +200,10 @@ const socialLogin = async ({ email, image, first_name }: { email: string, image?
         if (!user) {
             body.image = image
             body.first_name = first_name
+        }
+
+        if (fcmToken) {
+            body.fcmToken = fcmToken
         }
 
         user = await User.findOneAndUpdate({ email }, body, { upsert: true, new: true }) as IUser;

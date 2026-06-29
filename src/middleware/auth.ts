@@ -26,7 +26,7 @@ const auth = (...userRoles: string[]) => {
         const isUserExist = await User.findById(userId);
 
         if (!isUserExist) {
-            throw new AppError(httpStatus.NOT_FOUND, 'User does not exist');
+            throw new AppError(httpStatus.NOT_FOUND, 'Account does not exist');
         }
 
         if (!isUserExist?.isverified) {

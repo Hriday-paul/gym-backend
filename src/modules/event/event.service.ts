@@ -9,16 +9,88 @@ import httpStatus from "http-status";
 import { eventQueue } from "../../queues/event.queue";
 
 const allEvents = async (query: Record<string, any>) => {
-    const eventModel = new QueryBuilder(Event.find(), query)
-        .search(['name', 'venue'])
-        .arrayFilter("type", query.type)
-        .paginate()
-        .sort();
-    const data: any = await eventModel.modelQuery;
-    const meta = await eventModel.countTotal();
+
+    const lat = query?.lat;
+    const long = query?.long;
+    const limit = query?.limit ? parseInt(query.limit) : 10;
+    const page = query?.page ? parseInt(query.page) : 1;
+    const type = query?.type;
+    const searchTerm = query?.searchTerm;
+    const distance = query?.distance;
+
+    const pipeline: any[] = [];
+
+    if (long && lat) {
+
+        const userLocation: { type: "Point"; coordinates: [number, number] } = {
+            type: "Point",
+            coordinates: [Number(long), Number(lat)], // [longitude, latitude]
+        };
+
+        const geoNear: any = {
+            near: userLocation,
+            distanceField: "distance",
+            spherical: true,
+            distanceMultiplier: 0.000621371192 // for get mile
+        };
+
+        if (distance) {
+            geoNear.maxDistance = Number(distance) / 0.000621371192;
+        }
+
+        pipeline.unshift({
+            $geoNear: geoNear
+        });
+
+    }
+
+
+    // ── 2. $match (status + search + type filter) ────────────────────────────
+    const matchStage: Record<string, any> = {};
+
+    if (searchTerm) {
+        matchStage.$or = [
+            { name: { $regex: searchTerm, $options: "i" } },
+            { venue: { $regex: searchTerm, $options: "i" } },
+        ];
+    }
+
+    if (type) {
+        const types = Array.isArray(type) ? type : String(type).split(",");
+        matchStage.type = { $in: types };
+    }
+
+    pipeline.push({ $match: matchStage });
+
+    // ── 3. $sort ─────────────────────────────────────────────────────────────
+    pipeline.push({
+        $sort: lat && long ? { distance: 1 } : { createdAt: -1 },
+    });
+
+    // ── 4. Paginated data + count in parallel ─────────────────────────────────
+    const skip = (page - 1) * limit;
+
+    const events = await Event.aggregate([
+        ...pipeline,
+        { $skip: skip },
+        { $limit: limit },
+    ]);
+
+    const countResult = await Event.aggregate([
+        ...pipeline,
+        { $count: "total" },        // single-pass count after all filters
+    ]);
+
+    const total = countResult[0]?.total ?? 0;
+
     return {
-        data,
-        meta,
+        data: events,
+        meta: {
+            total,
+            page,
+            limit,
+            totalPage: Math.ceil(total / limit),
+        },
     };
 }
 
@@ -98,9 +170,13 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string, rol
 
     }
 
-    const { city, date, event_website, gym, image, name, registration_fee, state, venue } = payload
+    const { city, date, event_website, gym, image, name, registration_fee, state, venue, location, street, zip_code, apartment } = payload;
 
-    const updateFields: Partial<IEvent> = { city, date, event_website, gym, image, name, registration_fee, state, venue };
+    const formattedLocation = location?.coordinates
+        ? { type: 'Point', coordinates: location.coordinates }
+        : undefined;
+
+    const updateFields: Partial<IEvent> = { city, date, event_website, gym, image, name, registration_fee, state, venue, location: formattedLocation, street, zip_code, apartment };
 
     if (image) updateFields.image = image;
 

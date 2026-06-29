@@ -105,7 +105,7 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimR
         const user = await User.findById(userId);
 
         if (!user) {
-            throw new AppError(httpStatus.NOT_FOUND, "User not found")
+            throw new AppError(httpStatus.NOT_FOUND, "User does not exist!");
         }
 
         const matschedulesFormat = payload.mat_schedules.map(i => {
@@ -497,11 +497,11 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
         // { $limit: 10 },
     ]);
 
-    // update location to user
-    await User.updateOne(
-        { _id: userId },
-        { location: { type: "Point", coordinates: [long, lat] } }
-    );
+    // // update location to user
+    // await User.updateOne(
+    //     { _id: userId },
+    //     { location: { type: "Point", coordinates: [long, lat] } }
+    // );
 
     return mats;
 }
