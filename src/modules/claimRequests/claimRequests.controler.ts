@@ -14,7 +14,7 @@ export const AddclaimReq = catchAsync(async (req, res) => {
     const files = req.files as Record<string, Express.Multer.File[]> | undefined;
 
     if (!files)
-        throw new AppError(httpStatus.BAD_REQUEST, "Files used for verification are missing from your request!");
+        throw new AppError(httpStatus.BAD_REQUEST, "Verification files are missing from your request.");
 
     // required fields
     const requiredDocs = ["utility_bill", "business_license", "tax_document"];
@@ -22,7 +22,7 @@ export const AddclaimReq = catchAsync(async (req, res) => {
     // collect missing fields
     const missing = requiredDocs.filter((f) => !files[f]);
     if (missing.length > 0)
-        throw new AppError(httpStatus.BAD_REQUEST, `Missing files: ${missing.join(", ")}`);
+        throw new AppError(httpStatus.BAD_REQUEST, `Missing required files: ${missing.join(", ")}`);
 
 
     //check claim ailability
@@ -80,7 +80,7 @@ export const AddclaimReq = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: "Your gym claim has been requested!",
+        message: "Your gym claim request has been submitted successfully.",
         data: result,
     });
 });
@@ -90,7 +90,7 @@ const ApproveClaimReq = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: 'Gym claim approved successfully',
+        message: 'Gym claim approved successfully.',
         data: result,
     });
 });
@@ -100,7 +100,7 @@ const RejectClaimReq = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: 'Gym claim rejected successfully',
+        message: 'Gym claim rejected successfully.',
         data: result,
     });
 });
@@ -110,7 +110,7 @@ const claimStats = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: 'Claim stats retrived successfully',
+        message: 'Claim statistics retrieved successfully.',
         data: result,
     });
 });
@@ -119,7 +119,7 @@ const allClaims = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: 'All Claim reqs retrived successfully',
+        message: 'Claim requests retrieved successfully.',
         data: result,
     });
 });

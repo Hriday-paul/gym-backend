@@ -42,14 +42,14 @@ export const uploadToS3 = async (
   try {
     const key = await s3Client.send(command);
     if (!key) {
-      throw new AppError(httpStatus.BAD_REQUEST, 'File Upload failed');
+      throw new AppError(httpStatus.BAD_REQUEST, 'File upload failed');
     }
 
     const url = `https://${config.aws.bucket}.s3.${config.aws.region}.amazonaws.com/${fileName}`;
 
     return { url, key: fileName };
   } catch (error) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'File Upload failed');
+    throw new AppError(httpStatus.BAD_REQUEST, 'File upload failed');
   }
 };
 
@@ -63,7 +63,7 @@ export const deleteFromS3 = async (key: string) => {
     return await s3Client.send(command);
   } catch (error) {
     console.log('🚀 ~ deleteFromS3 ~ error:', error);
-    throw new Error('s3 file delete failed');
+    throw new AppError(httpStatus.BAD_REQUEST, 'S3 file deletion failed');
   }
 };
 
@@ -101,7 +101,7 @@ export const uploadManyToS3 = async (
     return uploadedUrls;
   } catch (error) {
     console.log(error)
-    throw new Error('File Upload failed');
+    throw new AppError(httpStatus.BAD_REQUEST, 'File upload failed');
   }
 };
 
@@ -122,6 +122,6 @@ export const deleteManyFromS3 = async (keys: string[]) => {
     return response;
   } catch (error) {
     console.error('Error deleting S3 files:', error);
-    throw new AppError(httpStatus.BAD_REQUEST, 'S3 file delete failed');
+    throw new AppError(httpStatus.BAD_REQUEST, 'S3 file deletion failed');
   }
 };

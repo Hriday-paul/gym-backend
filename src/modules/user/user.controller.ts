@@ -4,9 +4,6 @@ import { userService } from "./user.service";
 import { IUser } from "./user.interface";
 import sendResponse from "../../utils/sendResponse";
 import httpStatus from 'http-status'
-import { User } from "./user.models";
-import AppError from "../../error/AppError";
-import config from "../../config";
 import { uploadToS3 } from "../../utils/s3";
 
 //get all users
@@ -26,7 +23,7 @@ const getUnfriends = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Unfriend users retrive successfully',
+        message: 'Users retrieved successfully.',
         data: result,
     });
 })
@@ -46,7 +43,7 @@ const updateProfile = catchAsync(async (req: Request<{}, {}, IUser>, res: Respon
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Profile successfully updated!',
+        message: 'Profile updated successfully.',
         data: result,
     });
 
@@ -58,7 +55,7 @@ const getMyProfile = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'profile fetched successfully',
+        message: 'Profile retrieved successfully.',
         data: result,
     });
 });
@@ -69,7 +66,7 @@ const geUserDetails = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'User details fetched successfully',
+        message: 'User details retrieved successfully.',
         data: result,
     });
 });
@@ -80,7 +77,7 @@ const update_user_status: RequestHandler<{ id: string }, {}, { status: boolean }
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'status updated successfully',
+        message: 'Status updated successfully.',
         data: result,
     });
 })
@@ -91,7 +88,7 @@ const AddRecentCompetition: RequestHandler<{ id: string }, {}, { status: boolean
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Recent competition results successfully modified!',
+        message: 'Recent competition results added successfully.',
         data: result,
     });
 })
@@ -104,7 +101,7 @@ const deletemyAccount = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Your account has successfully been deleted!',
+        message: 'Your account has been deleted successfully.',
         data: result,
     });
 })

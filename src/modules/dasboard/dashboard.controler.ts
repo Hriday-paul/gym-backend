@@ -9,7 +9,7 @@ const userChart = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'user chart data retrive successfully',
+        message: 'User chart data retrieved successfully.',
         data: result,
     });
 })
@@ -19,7 +19,7 @@ const earningChart = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'earning chart data retrive successfully',
+        message: 'Earnings chart data retrieved successfully.',
         data: result,
     });
 })
@@ -29,7 +29,7 @@ const countData = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'total count data retrive successfully',
+        message: 'Count data retrieved successfully.',
         data: result,
     });
 })

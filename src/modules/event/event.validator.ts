@@ -1,4 +1,3 @@
-
 import { body, check } from "express-validator";
 
 export const newEventAddValidator = [
@@ -7,29 +6,29 @@ export const newEventAddValidator = [
     // .withMessage('Invalid type'),
 
     check("name").trim().notEmpty()
-        .withMessage('Event name is required!'),
+        .withMessage('Event name is required.'),
 
     check("street").trim().notEmpty()
-        .withMessage('Street address is required!'),
+        .withMessage('Street address is required.'),
 
     check("venue").optional(),
 
-    check('date').trim().optional().isISO8601().toDate().withMessage('Invalid date format'),
+    check('date').trim().optional().isISO8601().toDate().withMessage('Invalid date format.'),
 
     // body("event_website").trim().notEmpty()
     //     .withMessage('event_website is required'),
 
     check("registration_fee").trim().notEmpty()
-        .withMessage('Registration fee is required!')
-        .isInt().withMessage("Registration fee should be number!"),
+        .withMessage('Registration fee is required.')
+        .isInt().withMessage("Registration fee must be a number."),
 
     check("location.coordinates")
-        .exists().withMessage("location.coordinates is required")
-        .isArray({ min: 2, max: 2 }).withMessage("location.coordinates must be an array of 2 numbers [lng, lat]"),
+        .exists().withMessage("Location coordinates are required.")
+        .isArray({ min: 2, max: 2 }).withMessage("Location coordinates must be an array containing 2 numbers [longitude, latitude]."),
 
     // validate each item in the coordinates array is a float
     check("location.coordinates.*")
-        .isFloat().withMessage("each coordinate must be a number"),
+        .isFloat().withMessage("Each coordinate must be a number."),
 
 ]
 
@@ -38,9 +37,9 @@ export const updateEventValidator = [
     //     .isIn(["AGF", "IBJJF", "NAGA", "ADCC", "Local"])
     //     .withMessage('Invalid type'),
 
-    body('date').trim().optional().isISO8601().toDate().withMessage('Invalid date format'),
+    body('date').trim().optional().isISO8601().toDate().withMessage('Invalid date format.'),
 
     body("registration_fee").trim().optional()
-        .isInt().withMessage("registration_fee should be number"),
+        .isInt().withMessage("Registration fee must be a number."),
 
 ]

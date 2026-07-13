@@ -256,7 +256,7 @@ const DeleteGym = async (
         ) {
             throw new AppError(
                 httpstatus.BAD_REQUEST,
-                "You are not owner this gym"
+                "You do not own this gym."
             );
         }
 

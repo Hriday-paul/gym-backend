@@ -49,7 +49,7 @@ const AddGymByUser = catchAsync(async (req, res) => {
     const files = req.files as Record<string, Express.Multer.File[]> | undefined;
 
     if (!files)
-        throw new AppError(httpStatus.BAD_REQUEST, "Files used for verification are missing from your request!");
+        throw new AppError(httpStatus.BAD_REQUEST, "Files used for verification are missing from your request.");
 
     // required fields
     const requiredDocs = ["utility_bill", "business_license", "tax_document"];
@@ -103,7 +103,7 @@ const AddGymByUser = catchAsync(async (req, res) => {
         if (urls?.length <= 0) {
             throw new AppError(
                 httpStatus.BAD_REQUEST,
-                'Minimum of 1 image required for verification!',
+                'Minimum of 1 image is required for verification.',
             );
         }
     }
@@ -112,7 +112,7 @@ const AddGymByUser = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Your gym request was successfully received!',
+        message: 'Your gym request was successfully received.',
         data: result,
     });
 })
@@ -122,7 +122,7 @@ const MyGyms = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'My Gyms Retrived Successfully',
+        message: 'My Gyms Retrieved Successfully',
         data: result,
     });
 })
@@ -132,7 +132,7 @@ const GymDetails = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Gym Details Retrived Successfully',
+        message: 'Gym Details Retrieved Successfully.',
         data: result,
     });
 })
@@ -143,7 +143,7 @@ const DeleteGym = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Gym successfully deleted!',
+        message: 'Gym successfully deleted.',
         data: result,
     });
 })
@@ -154,7 +154,7 @@ const deleteGymImage = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Image successfully deleted!',
+        message: 'Image successfully deleted.',
         data: result,
     });
 })
@@ -165,7 +165,7 @@ const updateGym = catchAsync(async (req, res) => {
     const exist = await GYM.findById(req.params.id)
 
     if (exist?.user.toString() !== req.user?._id && req.user?.role !== USER_ROLE.admin) {
-        throw new AppError(httpStatus.BAD_REQUEST, "You are not allowed to process this gym")
+        throw new AppError(httpStatus.BAD_REQUEST, "You are not allowed to process this gym.")
     }
 
     const files = req.files as Express.Multer.File[];
@@ -189,7 +189,7 @@ const updateGym = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Gym successfully updated!',
+        message: 'Gym successfully updated.',
         data: result,
     });
 })

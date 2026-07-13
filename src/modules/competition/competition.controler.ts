@@ -9,7 +9,7 @@ const AddRecentCompetition = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'A new competition has been successfully added to your profile',
+        message: 'A new competition has been added to your profile successfully.',
         data: result,
     });
 })
@@ -18,7 +18,7 @@ const MyRecentCompetitions = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Recent competition retrived success',
+        message: 'Recent competitions retrieved successfully.',
         data: result,
     });
 })
@@ -27,7 +27,7 @@ const DeleteRecentCompetition = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Competition deleted successfully from your profile',
+        message: 'Competition deleted from your profile successfully.',
         data: result,
     });
 })

@@ -20,7 +20,7 @@ const createUser = catchAsync(async (req: Request<{}, {}, IUser>, res: Response)
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Account successfully registered!',
+        message: 'Account registered successfully!',
         data: { user: result, otpToken: otptoken },
     });
 })
@@ -32,7 +32,7 @@ const loginUser = catchAsync(async (req: Request<{}, {}, { email: string, passwo
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Login successful!',
+        message: 'Login successful.',
         data: result,
     });
 })
@@ -42,7 +42,7 @@ const adminLogin = catchAsync(async (req: Request<{}, {}, { email: string, passw
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Login successful!',
+        message: 'Login successful.',
         data: result,
     });
 })
@@ -56,7 +56,7 @@ const socialLogin = catchAsync(async (req: Request<{}, {}, { email: string, imag
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Login successful!',
+        message: 'Login successful.',
         data: result,
     });
 })
@@ -68,7 +68,7 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Password successfully changed!',
+        message: 'Password changed successfully.',
         data: result,
     });
 });
@@ -79,7 +79,7 @@ const forgotPassword = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'A one time password has been sent to your email address!',
+        message: 'A one-time password has been sent to your email address.',
         data: result,
     });
 });
@@ -93,7 +93,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Password successfully reset!',
+        message: 'Password reset successfully.',
         data: result,
     });
 });
@@ -106,7 +106,7 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Access token retrieved successfully',
+        message: 'Access token retrieved successfully.',
         data: result,
     });
 });

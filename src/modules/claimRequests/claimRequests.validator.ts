@@ -1,17 +1,26 @@
 import { body } from "express-validator";
 
-// user : ObjectId
-//     gym : ObjectId
-//     email : string,
-//     phone : string
-//     utility_bill : { key: string; url: string },
-//     business_license : { key: string; url: string },
-//     tax_document : { key: string; url: string },
-
 export const addClaimReqValidator = [
-    body('email').trim().not().isEmpty().withMessage('Email address is required!').isEmail().normalizeEmail({ all_lowercase: true }).withMessage('Valid email address is required!'),
+    body('email')
+        .trim()
+        .not()
+        .isEmpty()
+        .withMessage('Email address is required.')
+        .isEmail()
+        .normalizeEmail({ all_lowercase: true })
+        .withMessage('A valid email address is required.'),
 
-    body('phone').optional().trim().isMobilePhone('any').withMessage('Invalid phone number'), //.isMobilePhone('any').withMessage('Invalid contact number')
+    body('phone')
+        .optional()
+        .trim()
+        .isMobilePhone('any')
+        .withMessage('Invalid phone number.'), //.isMobilePhone('any').withMessage('Invalid contact number')
 
-    body('gym').trim().not().isEmpty().withMessage('gym is required').isMongoId().withMessage("gym id invalid")
+    body('gym')
+        .trim()
+        .not()
+        .isEmpty()
+        .withMessage('Gym ID is required.')
+        .isMongoId()
+        .withMessage('Invalid gym ID.')
 ]

@@ -10,7 +10,7 @@ const allEvents = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'All Events Retrived Successfully',
+        message: 'Events retrieved successfully.',
         data: result,
     });
 })
@@ -27,7 +27,7 @@ const addEvent = catchAsync(async (req, res) => {
     } else {
         throw new AppError(
             httpStatus.BAD_REQUEST,
-            'Event image is required',
+            'Event image is required.',
         );
     }
 
@@ -38,7 +38,7 @@ const addEvent = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'New event successfully added!',
+        message: 'Event added successfully.',
         data: result,
     });
 })
@@ -48,7 +48,7 @@ const myEvents = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'My Events Retrived Successfully',
+        message: 'Events retrieved successfully.',
         data: result,
     });
 })
@@ -57,7 +57,7 @@ const deleteEvent = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Event successfully deleted!',
+        message: 'Event deleted successfully.',
         data: result,
     });
 })
@@ -74,7 +74,7 @@ const updateEvent = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Event successfully updated!',
+        message: 'Event updated successfully.',
         data: result,
     });
 })

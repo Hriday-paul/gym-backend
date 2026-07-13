@@ -21,18 +21,18 @@ const CheckclaimReq = async (gymId: string, userId: string) => {
     const gym = await GYM.findById(gymId);
 
     if (!gym) {
-        throw new AppError(httpstatus.NOT_FOUND, "Gym not found!");
+        throw new AppError(httpstatus.NOT_FOUND, "Gym not found");
     }
     //gym already claimed or not
     if (gym.isClaimed) {
-        throw new AppError(httpstatus.BAD_REQUEST, "The gym you requested to claim is not available.");
+        throw new AppError(httpstatus.BAD_REQUEST, "The gym you are requesting to claim is not available.");
     }
 
     //check is exist or not
     const exist = await ClaimReq.findOne({ user: userId, gym: gymId });
 
     if (exist) {
-        throw new AppError(httpstatus.CONFLICT, "You have already requested to claim this gym!");
+        throw new AppError(httpstatus.CONFLICT, "You have already submitted a claim request for this gym.");
     }
 
 }
@@ -49,11 +49,11 @@ const ApproveClaimReq = async (claimId: string) => {
         const exist = await ClaimReq.findOne({ _id: claimId }).populate("user");
 
         if (!exist) {
-            throw new AppError(httpstatus.NOT_FOUND, "Claim request unavailable.");
+            throw new AppError(httpstatus.NOT_FOUND, "Claim request not found.");
         }
 
         if (exist.status == "approved") {
-            throw new AppError(httpstatus.BAD_REQUEST, "Your gym claim has already been approved!");
+            throw new AppError(httpstatus.BAD_REQUEST, "This gym claim has already been approved.");
         }
 
         //owner transfer
@@ -74,7 +74,7 @@ const ApproveClaimReq = async (claimId: string) => {
             notificationJobs.singleNotification,
             {
                 tokens: tokenToUse,
-                title: `Your gym request has been approved!`,
+                title: `Your gym claim request has been approved.`,
                 message: `Your request to claim gym has been approved! It will be visible under “my gyms”.`,
                 receiverId: user?._id,
                 receiverEmail: user?.email,
@@ -107,7 +107,7 @@ const RejectClaimReq = async (claimId: string) => {
     const exist = await ClaimReq.findOne({ _id: claimId }).populate("user");
 
     if (!exist) {
-        throw new AppError(httpstatus.NOT_FOUND, "Claim request unavailable.");
+        throw new AppError(httpstatus.NOT_FOUND, "Claim request not found.");
     }
 
     if (exist.status == "rejected") {
@@ -128,8 +128,8 @@ const RejectClaimReq = async (claimId: string) => {
         notificationJobs.singleNotification,
         {
             tokens: tokenToUse,
-            title: "Your gym request has been rejected!",
-            message: "Unfortunately, your request to claim gym has been rejected. Please provide valid documents and information for verification purposes!",
+            title: "Your gym claim request has been rejected.",
+            message: "Unfortunately, your gym claim request has been rejected. Please provide valid documents and accurate information for verification purposes.",
             receiverId: user?._id,
             receiverEmail: user?.email,
             senderId: user._id

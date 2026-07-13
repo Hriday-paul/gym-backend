@@ -134,11 +134,11 @@ const deleteEvent = async (eventId: string, userId: string, role: string) => {
     const exist = await Event.findById(eventId);
 
     if (!exist) {
-        throw new AppError(httpStatus.NOT_FOUND, "Event does not exist!");
+        throw new AppError(httpStatus.NOT_FOUND, "Event does not exist.");
     }
 
     if (exist.user.toString() !== userId && role !== USER_ROLE.admin) {
-        throw new AppError(httpStatus.BAD_REQUEST, "You’re not the owner of this event!");
+        throw new AppError(httpStatus.BAD_REQUEST, "You are not the owner of this event.");
     }
 
     const res = await Event.deleteOne({ _id: eventId });
@@ -161,12 +161,12 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string, rol
     const exist = await Event.findById(eventId)
 
     if (!exist) {
-        throw new AppError(httpStatus.NOT_FOUND, "Event does not exist!");
+        throw new AppError(httpStatus.NOT_FOUND, "Event does not exist.");
     }
 
     if (exist.user.toString() !== userId && role !== USER_ROLE.admin) {
 
-        throw new AppError(httpStatus.BAD_REQUEST, "You’re not the owner of this event!");
+        throw new AppError(httpStatus.BAD_REQUEST, "You are not the owner of this event.");
 
     }
 
@@ -190,7 +190,7 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string, rol
     if (Object.keys(updateFields).length === 0) {
         throw new AppError(
             httpStatus.NOT_FOUND,
-            'No valid field found',
+            'No valid fields were provided.',
         );
     }
 

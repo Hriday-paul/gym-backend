@@ -1,47 +1,64 @@
 import { check, query } from "express-validator";
 
 export const gymAddValidator = [
-    check('name').trim().not().isEmpty().withMessage('Name is required!'),
-    check('description').trim().optional(),
-    check('email').trim().optional().isEmail().normalizeEmail({ all_lowercase: true }).withMessage('Valid email address is required!'),
-    check('phone').optional().trim().isMobilePhone('any').withMessage('Invalid phone number!'), //.isMobilePhone('any').withMessage('Invalid contact number')
+    check('name')
+        .trim()
+        .not()
+        .isEmpty()
+        .withMessage('Gym name is required.'),
+
+    check('description')
+        .trim()
+        .optional(),
+
+    check('email')
+        .trim()
+        .optional()
+        .isEmail()
+        .normalizeEmail({ all_lowercase: true })
+        .withMessage('Please enter a valid email address.'),
+
+    check('phone')
+        .optional()
+        .trim()
+        .isMobilePhone('any')
+        .withMessage('Please enter a valid phone number.'),
 
     check('mat_schedules')
         .isArray()
-        .withMessage('mat_schedules must be array'),
+        .withMessage('Mat schedules must be provided as an array.'),
 
     check('mat_schedules.*.day')
         .notEmpty()
-        .withMessage('day name is required')
+        .withMessage('Please select a day for the mat schedule.')
         .isIn(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
-        .withMessage('Invalid day'),
+        .withMessage('Please select a valid day.'),
 
     check('mat_schedules.*.from')
         .notEmpty()
-        .withMessage('From is required'),
+        .withMessage('Please provide a start time for the mat schedule.'),
 
     check('mat_schedules.*.to')
         .notEmpty()
-        .withMessage('To is required'),
-
+        .withMessage('Please provide an end time for the mat schedule.'),
 
     check('class_schedules')
         .isArray()
-        .withMessage('class_schedules must be array'),
+        .withMessage('Class schedules must be provided as an array.'),
 
     check('class_schedules.*.day')
         .notEmpty()
-        .withMessage('day name is required')
+        .withMessage('Please select a day for the class schedule.')
         .isIn(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
-        .withMessage('Invalid day'),
+        .withMessage('Please select a valid day.'),
 
     check('class_schedules.*.from')
         .notEmpty()
-        .withMessage('From is required'),
+        .withMessage('Please provide a start time for the class schedule.'),
 
     check('class_schedules.*.to')
         .notEmpty()
-        .withMessage('To is required'),
+        .withMessage('Please provide an end time for the class schedule.'),
 
     // check('class_schedules.*.name')
     // .notEmpty()
@@ -49,124 +66,188 @@ export const gymAddValidator = [
 
     check('disciplines')
         .isArray()
-        .withMessage('disciplines must be array'),
+        .withMessage('Disciplines must be provided as an array.'),
 
     check('disciplines.*')
         .notEmpty()
         .isString()
-        .withMessage('Each disciplines must be string'),
+        .withMessage('Each discipline must be a valid text value.'),
 
-    check("location").exists().withMessage("Location is required!").isObject().withMessage("Location must be an object"),
+    check("location")
+        .exists()
+        .withMessage("Location information is required.")
+        .isObject()
+        .withMessage("Location must be a valid object."),
 
-    // coordinates must be an array of exactly 2 items
     check("location.coordinates")
-        .exists().withMessage("location.coordinates is required")
-        .isArray({ min: 2, max: 2 }).withMessage("location.coordinates must be an array of 2 numbers [lng, lat]"),
+        .exists()
+        .withMessage("Location coordinates are required.")
+        .isArray({ min: 2, max: 2 })
+        .withMessage("Location coordinates must contain exactly two values: [longitude, latitude]."),
 
-    // validate each item in the coordinates array is a float
     check("location.coordinates.*")
-        .isFloat().withMessage("each coordinate must be a number"),
+        .isFloat()
+        .withMessage("Each coordinate must be a valid number."),
 
     check('apartment').optional(),
 ]
 
 export const deleteGymImageValidator = [
-    check('gymId').trim().not().isEmpty().withMessage('Gym id required!').isMongoId().withMessage("Gym id invalid!"),
-    check('imageId').trim().not().isEmpty().withMessage('Image id is required').isMongoId().withMessage("Image id invalid"),
+    check('gymId')
+        .trim()
+        .not()
+        .isEmpty()
+        .withMessage('Gym ID is required.')
+        .isMongoId()
+        .withMessage('Please provide a valid Gym ID.'),
+
+    check('imageId')
+        .trim()
+        .not()
+        .isEmpty()
+        .withMessage('Image ID is required.')
+        .isMongoId()
+        .withMessage('Please provide a valid Image ID.'),
 ]
 
 export const gymUpdateValidator = [
 
-    check('email').trim().optional().isEmail().normalizeEmail({ all_lowercase: true }).withMessage('Invalid email address!'),
-    check('phone').optional().trim().isMobilePhone('any').withMessage('Invalid phone number'), //.isMobilePhone('any').withMessage('Invalid contact number')
+    check('email')
+        .trim()
+        .optional()
+        .isEmail()
+        .normalizeEmail({ all_lowercase: true })
+        .withMessage('Please enter a valid email address.'),
+
+    check('phone')
+        .optional()
+        .trim()
+        .isMobilePhone('any')
+        .withMessage('Please enter a valid phone number.'),
 
     check('mat_schedules')
         .optional()
         .isArray()
-        .withMessage('mat_schedules must be array'),
+        .withMessage('Mat schedules must be provided as an array.'),
 
     check('mat_schedules.*.day')
         .notEmpty()
-        .withMessage('day name is required')
+        .withMessage('Please select a day for the mat schedule.')
         .isIn(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
-        .withMessage('Invalid day'),
+        .withMessage('Please select a valid day.'),
 
     check('mat_schedules.*.from')
         .notEmpty()
-        .withMessage('From is required')
-        .isInt().withMessage("From should be minute format. eg: 2:30PM - 14X60+30 = 870"),
+        .withMessage('Please provide a start time for the mat schedule.')
+        .isInt()
+        .withMessage('Please provide the time in minute format (e.g., 2:30 PM = 870).'),
 
     check('mat_schedules.*.to')
         .notEmpty()
-        .withMessage('To is required')
-        .isInt().withMessage("To should be minute format. eg: 2:30PM - 14X60+30 = 870"),
-
+        .withMessage('Please provide an end time for the mat schedule.')
+        .isInt()
+        .withMessage('Please provide the time in minute format (e.g., 2:30 PM = 870).'),
 
     check('class_schedules')
         .optional()
         .isArray()
-        .withMessage('class_schedules must be array'),
+        .withMessage('Class schedules must be provided as an array.'),
 
     check('class_schedules.*.day')
         .notEmpty()
-        .withMessage('day name is required')
+        .withMessage('Please select a day for the class schedule.')
         .isIn(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
-        .withMessage('Invalid day'),
+        .withMessage('Please select a valid day.'),
 
     check('class_schedules.*.from')
         .notEmpty()
-        .withMessage('From is required')
-        .isInt().withMessage("From should be minute format. eg: 2:30PM - 14X60+30 = 870"),
+        .withMessage('Please provide a start time for the class schedule.')
+        .isInt()
+        .withMessage('Please provide the time in minute format (e.g., 2:30 PM = 870).'),
 
     check('class_schedules.*.to')
         .notEmpty()
-        .withMessage('To is required')
-        .isInt().withMessage("To should be minute format (e.g., 2:30PM = 870)"),
+        .withMessage('Please provide an end time for the class schedule.')
+        .isInt()
+        .withMessage('Please provide the time in minute format (e.g., 2:30 PM = 870).'),
 
     check('disciplines')
         .optional()
         .isArray()
-        .withMessage('disciplines must be array'),
+        .withMessage('Disciplines must be provided as an array.'),
 
     check('disciplines.*')
         .notEmpty()
         .isString()
-        .withMessage('Each disciplines must be string'),
+        .withMessage('Each discipline must be a valid text value.'),
 
-    check("location").optional().isObject().withMessage("location must be an object"),
+    check("location")
+        .optional()
+        .isObject()
+        .withMessage("Location must be a valid object."),
 
-    // coordinates must be an array of exactly 2 items
     check("location.coordinates")
         .if(check("location").exists())
-        .isArray({ min: 2, max: 2 }).withMessage("location.coordinates should be provide"),
+        .isArray({ min: 2, max: 2 })
+        .withMessage("Location coordinates must contain exactly two values: [longitude, latitude]."),
 
-    // validate each item in the coordinates array is a float
     check("location.coordinates.*")
-        .isFloat().withMessage("each coordinate must be a number"),
+        .isFloat()
+        .withMessage("Each coordinate must be a valid number."),
 ]
 
 export const nearGymValidator = [
-    query("day").notEmpty()
-        .withMessage('day name is required')
+    query("day")
+        .notEmpty()
+        .withMessage('Please select a day.')
         .isIn(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
-        .withMessage('Invalid day'),
+        .withMessage('Please provide a valid day.'),
 
-    query("hour").notEmpty()
-        .withMessage('Your current hour is required')
+    query("hour")
+        .notEmpty()
+        .withMessage('Current hour is required.')
         .isInt({ min: 1, max: 24 })
-        .withMessage('Invalid hour time'),
+        .withMessage('Please provide a valid hour.'),
 
-    query("minute").notEmpty()
-        .withMessage('Your current minute is required')
+    query("minute")
+        .notEmpty()
+        .withMessage('Current minute is required.')
         .isInt({ min: 0, max: 60 })
-        .withMessage('Invalid minute time'),
+        .withMessage('Please provide a valid minute.'),
 
-    query("long").trim().not().isEmpty().withMessage('long is required').isFloat().withMessage("long invalid"),
-    query("lat").trim().not().isEmpty().withMessage('lat is required').isFloat().withMessage("lat invalid"),
+    query("long")
+        .trim()
+        .not()
+        .isEmpty()
+        .withMessage('Longitude is required.')
+        .isFloat()
+        .withMessage('Please provide a valid longitude.'),
+
+    query("lat")
+        .trim()
+        .not()
+        .isEmpty()
+        .withMessage('Latitude is required.')
+        .isFloat()
+        .withMessage('Please provide a valid latitude.'),
 ]
 
 export const allMatsvalidator = [
-    query("long").trim().optional().isFloat().withMessage("long invalid"),
-    query("lat").trim().optional().isFloat().withMessage("lat invalid"),
-    query("distance").trim().optional().isFloat().withMessage("distance invalid"),
+    query("long")
+        .trim()
+        .optional()
+        .isFloat()
+        .withMessage('Please provide a valid longitude.'),
+
+    query("lat")
+        .trim()
+        .optional()
+        .isFloat()
+        .withMessage('Please provide a valid latitude.'),
+
+    query("distance")
+        .trim()
+        .optional()
+        .isFloat()
+        .withMessage('Please provide a valid distance.'),
 ]
