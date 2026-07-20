@@ -20,7 +20,7 @@ const EventSchema: Schema<IEvent> = new Schema(
         },
         zip_code: {
             type: String,
-            required: true,
+            // required: true,
         },
         apartment: {
             type: String,
