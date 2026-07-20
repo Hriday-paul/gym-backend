@@ -9,6 +9,7 @@ const EventSchema: Schema<IEvent> = new Schema(
         state: { type: String },
         city: { type: String },
         date: { type: Date },
+        startDate: { type: Date },
         duration: { type: String },
         registration_fee: { type: Number, default: 0 },
         event_website: { type: String },

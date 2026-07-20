@@ -7,6 +7,7 @@ export interface IEvent {
     state : string,
     city : string,
     date : Date,
+    startDate : Date,
     duration ?: string,
     registration_fee : number,
     event_website : string,

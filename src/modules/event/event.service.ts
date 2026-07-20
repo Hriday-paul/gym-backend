@@ -1,5 +1,4 @@
 import moment from "moment";
-import QueryBuilder from "../../builder/QueryBuilder";
 import AppError from "../../error/AppError";
 import { deleteFromS3 } from "../../utils/s3";
 import { USER_ROLE } from "../user/user.constants";
@@ -170,13 +169,13 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string, rol
 
     }
 
-    const { city, date, event_website, gym, image, name, registration_fee, state, venue, location, street, zip_code, apartment, type } = payload;
+    const { city, date, startDate, event_website, gym, image, name, registration_fee, state, venue, location, street, zip_code, apartment, type } = payload;
 
     const formattedLocation = location?.coordinates
         ? { type: 'Point', coordinates: location.coordinates }
         : undefined;
 
-    const updateFields: Partial<IEvent> = { city, date, event_website, gym, image, name, registration_fee, state, venue, location: formattedLocation, street, zip_code, apartment, type };
+    const updateFields: Partial<IEvent> = { city, date, startDate, event_website, gym, image, name, registration_fee, state, venue, location: formattedLocation, street, zip_code, apartment, type };
 
     if (image) updateFields.image = image;
 
