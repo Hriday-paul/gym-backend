@@ -27,9 +27,9 @@ new Worker("mat-reminder", async job => {
                     coordinates: gym?.location?.coordinates as [number, number],
                 },
                 distanceField: "distance",
-                maxDistance: 30 / 0.000621371192, // 30 mile
+                maxDistance: 30 * 1609.34, // 30 mile
                 spherical: true,
-                distanceMultiplier: 0.000621371192 // for get mile
+                distanceMultiplier: 0.000621371192, // for get mile
             }
         },
         {
