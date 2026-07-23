@@ -16,8 +16,6 @@ export const sendNotification = async (
   payload: INotification
 ): Promise<unknown> => {
 
-  console.log(fcmToken, "----------------fccmtokens-------------")
-
   if (fcmToken.length > 0) {
     const response = await admin.messaging().sendEachForMulticast({
       tokens: fcmToken,
@@ -52,8 +50,6 @@ export const sendNotification = async (
         }
       },
     });
-
-    console.log("-----------notification response---------------")
 
     if (response?.failureCount > 0) {
       response.responses.forEach((res, index) => {
@@ -97,6 +93,8 @@ export const sendMultipleNotification = async (
   { title, message }: { title: string, message: string }
 ): Promise<unknown> => {
 
+  console.log(fcmToken, "----------------fccmtokens-------------")
+
   if (fcmToken.length <= 0) {
     return;
   }
@@ -134,6 +132,9 @@ export const sendMultipleNotification = async (
       }
     },
   });
+
+
+  console.log("-----------notification response---------------", response, "-----------------notification response------------------")
 
   // Log any individual token failures
   if (response?.failureCount > 0) {
