@@ -498,10 +498,10 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
     ]);
 
     // // update location to user
-    // await User.updateOne(
-    //     { _id: userId },
-    //     { location: { type: "Point", coordinates: [long, lat] } }
-    // );
+    await User.updateOne(
+        { _id: userId },
+        { location: { type: "Point", coordinates: [long, lat] } }
+    );
 
     return mats;
 }
