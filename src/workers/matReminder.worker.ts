@@ -41,6 +41,8 @@ new Worker("mat-reminder", async job => {
         },
     ]);
 
+    console.log(gym, nearUsersAtGym, "gym and users");
+
     const mat = gym.mat_schedules.find(mat => mat?._id?.toString() == matId);
 
     if (!mat) return;
