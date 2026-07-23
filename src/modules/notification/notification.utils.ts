@@ -16,6 +16,8 @@ export const sendNotification = async (
   payload: INotification
 ): Promise<unknown> => {
 
+  console.log(fcmToken, "----------------fccmtokens-------------")
+
   if (fcmToken.length > 0) {
     const response = await admin.messaging().sendEachForMulticast({
       tokens: fcmToken,
