@@ -35,7 +35,11 @@ const updateProfile = async (payload: IUser, userId: string, image: string) => {
 
 //get all users
 const allUsers = async (query: Record<string, any>, userId: string) => {
-    const userModel = new QueryBuilder(User.find({ role: { $ne: "admin" }, isverified: true, _id: { $ne: userId }, isDeleted: false }, { password: 0, verification: 0, fcmToken: 0, isDeleted: 0, isSocialLogin: 0 }), query)
+    const userModel = new QueryBuilder(User.find({ role: { $ne: "admin" }, isverified: true, _id: { $ne: userId }, isDeleted: false }, {
+        password: 0, verification: 0,
+        // fcmToken: 0,
+        isDeleted: 0, isSocialLogin: 0
+    }), query)
         .search(['first_name', 'last_name', 'email', 'contact'])
         .filter()
         .paginate()
