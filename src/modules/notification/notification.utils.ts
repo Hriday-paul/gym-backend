@@ -51,6 +51,8 @@ export const sendNotification = async (
       },
     });
 
+    console.log("-----------notification response---------------")
+
     if (response?.failureCount > 0) {
       response.responses.forEach((res, index) => {
         if (!res.success) {
