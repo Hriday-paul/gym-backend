@@ -416,6 +416,12 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
     const nextDay = NextDay[day as Day];
     const nextDayEndTime = endTime - MINUTES_IN_DAY;
 
+    // // update location to user
+    await User.updateOne(
+        { _id: userId },
+        { location: { type: "Point", coordinates: [long, lat] } }
+    );
+
     const mats = await GYM.aggregate([
         {
             $geoNear: geoNear
@@ -496,12 +502,6 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
         { $sort: { distance: 1, from: 1 } },
         // { $limit: 10 },
     ]);
-
-    // // update location to user
-    await User.updateOne(
-        { _id: userId },
-        { location: { type: "Point", coordinates: [long, lat] } }
-    );
 
     return mats;
 }
