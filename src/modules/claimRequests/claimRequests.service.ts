@@ -57,11 +57,11 @@ const ApproveClaimReq = async (claimId: string) => {
         }
 
         //owner transfer
-        await GYM.updateOne({ _id: exist?.gym }, { user: exist?.user, isClaimed: true, status: "approved" });
+        await GYM.updateOne({ _id: exist?.gym }, { user: exist?.user, isClaimed: true, status: "approved" }, { session });
 
 
         // update status
-        await ClaimReq.updateOne({ _id: claimId }, { status: "approved" });
+        await ClaimReq.updateOne({ _id: claimId }, { status: "approved" }, { session });
 
         // transaction complete;
         await session.commitTransaction();
@@ -93,7 +93,9 @@ const ApproveClaimReq = async (claimId: string) => {
         return null;
 
     } catch (error: any) {
-        await session.abortTransaction();
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
         throw new AppError(httpstatus.BAD_GATEWAY, error.message);
     } finally {
         session.endSession();
