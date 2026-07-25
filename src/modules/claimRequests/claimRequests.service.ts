@@ -69,7 +69,7 @@ const ApproveClaimReq = async (claimId: string) => {
         const user = exist?.user as unknown as IUser
 
         // send notification to user req is approved
-        const tokenToUse = user?.fcmToken;
+        const tokenToUse = (user?.fcmToken && user?.notification) ? [user?.fcmToken] : [];
         await notificationQueue.add(
             notificationJobs.singleNotification,
             {
@@ -122,7 +122,7 @@ const RejectClaimReq = async (claimId: string) => {
     const user = exist?.user as unknown as IUser
 
     // send notification user gym request is rejected
-    const tokenToUse = user?.fcmToken;
+    const tokenToUse = (user?.fcmToken && user?.notification) ? [user?.fcmToken] : [];
 
     await notificationQueue.add(
         notificationJobs.singleNotification,

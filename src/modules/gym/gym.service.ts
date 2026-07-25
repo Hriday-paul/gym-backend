@@ -133,7 +133,7 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimR
         await session.commitTransaction();
 
         //send notification to user gym is under review
-        const tokenToUse = user?.fcmToken;
+        const tokenToUse = (user?.fcmToken && user?.notification) ? [user?.fcmToken] : [];
         await notificationQueue.add(
             notificationJobs.singleNotification,
             {
