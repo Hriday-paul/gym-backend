@@ -2,6 +2,7 @@ import { ObjectId } from "mongoose";
 
 export interface IEvent {
     type : string,
+    brand : string,
     name : string,
     venue : string,
     state : string,

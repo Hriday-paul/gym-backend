@@ -4,6 +4,7 @@ import { IEvent } from './event.interface';
 const EventSchema: Schema<IEvent> = new Schema(
     {
         type: { type: String },
+        brand: { type: String },
         name: { type: String, required: true },
         venue: { type: String },
         state: { type: String },

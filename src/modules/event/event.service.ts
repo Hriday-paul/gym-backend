@@ -14,6 +14,7 @@ const allEvents = async (query: Record<string, any>) => {
     const limit = query?.limit ? parseInt(query.limit) : 10;
     const page = query?.page ? parseInt(query.page) : 1;
     const type = query?.type;
+    const brand = query?.brand;
     const searchTerm = query?.searchTerm;
     const distance = query?.distance;
 
@@ -57,6 +58,10 @@ const allEvents = async (query: Record<string, any>) => {
     if (type) {
         const types = Array.isArray(type) ? type : String(type).split(",");
         matchStage.type = { $in: types };
+    }
+    if (brand) {
+        const brands = Array.isArray(brand) ? brand : String(brand).split(",");
+        matchStage.brand = { $in: brands };
     }
 
     pipeline.push({ $match: matchStage });
@@ -169,13 +174,13 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string, rol
 
     }
 
-    const { city, date, startDate, registrationDate, event_website, gym, image, name, registration_fee, state, venue, location, street, zip_code, apartment, type } = payload;
+    const { city, date, startDate, registrationDate, event_website, gym, image, name, registration_fee, state, venue, location, street, zip_code, apartment, type, brand } = payload;
 
     const formattedLocation = location?.coordinates
         ? { type: 'Point', coordinates: location.coordinates }
         : undefined;
 
-    const updateFields: Partial<IEvent> = { city, date, startDate, registrationDate, event_website, gym, image, name, registration_fee, state, venue, location: formattedLocation, street, zip_code, apartment, type };
+    const updateFields: Partial<IEvent> = { city, date, startDate, registrationDate, event_website, gym, image, name, registration_fee, state, venue, location: formattedLocation, street, zip_code, apartment, type, brand };
 
     if (image) updateFields.image = image;
 
