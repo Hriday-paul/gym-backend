@@ -21,31 +21,26 @@ const allEvents = async (query: Record<string, any>) => {
     const pipeline: any[] = [];
 
     if (long && lat) {
-
         const userLocation: { type: "Point"; coordinates: [number, number] } = {
             type: "Point",
-            coordinates: [Number(long), Number(lat)], // [longitude, latitude]
+            coordinates: [Number(long), Number(lat)],
         };
 
         const geoNear: any = {
             near: userLocation,
             distanceField: "distance",
             spherical: true,
-            distanceMultiplier: 0.000621371192 // for get mile
+            distanceMultiplier: 0.000621371192
         };
 
         if (distance) {
             geoNear.maxDistance = Number(distance) / 0.000621371192;
         }
 
-        pipeline.unshift({
-            $geoNear: geoNear
-        });
-
+        pipeline.unshift({ $geoNear: geoNear });
     }
 
-
-    // ── 2. $match (status + search + type filter) ────────────────────────────
+    // ── $match (status + search + type filter) ─────────────────────────────
     const matchStage: Record<string, any> = {};
 
     if (searchTerm) {
@@ -66,23 +61,48 @@ const allEvents = async (query: Record<string, any>) => {
 
     pipeline.push({ $match: matchStage });
 
-    // ── 3. $sort ─────────────────────────────────────────────────────────────
+    // ── Compute event status + a unified sort key ──────────────────────────
+    // eventStatus: 0 = upcoming/running (not yet ended), 1 = past
+    // sortKey: ascending startDate for upcoming/running (soonest first),
+    //          descending date for past (most recently ended first)
     pipeline.push({
-        $sort: lat && long ? { distance: 1 } : { createdAt: -1 },
+        $addFields: {
+            eventStatus: {
+                $cond: [{ $gte: ["$date", "$$NOW"] }, 0, 1],
+            },
+            sortKey: {
+                $cond: [
+                    { $gte: ["$date", "$$NOW"] },
+                    { $toLong: "$startDate" },
+                    { $multiply: [-1, { $toLong: "$date" }] },
+                ],
+            },
+        },
     });
 
-    // ── 4. Paginated data + count in parallel ─────────────────────────────────
+    // ── $sort ────────────────────────────────────────────────────────────
+    pipeline.push({
+        $sort: {
+            eventStatus: 1,      // upcoming/running first, past last
+            ...(lat && long ? { distance: 1 } : {}), // then by distance if geo query
+            sortKey: 1,          // then chronologically within each group
+        },
+    });
+
+    // ── Paginated data + count in parallel ──────────────────────────────────
     const skip = (page - 1) * limit;
 
-    const events = await Event.aggregate([
-        ...pipeline,
-        { $skip: skip },
-        { $limit: limit },
-    ]);
-
-    const countResult = await Event.aggregate([
-        ...pipeline,
-        { $count: "total" },        // single-pass count after all filters
+    const [events, countResult] = await Promise.all([
+        Event.aggregate([
+            ...pipeline,
+            { $skip: skip },
+            { $limit: limit },
+            { $project: { sortKey: 0 } }, // clean up helper field from output
+        ]),
+        Event.aggregate([
+            ...pipeline,
+            { $count: "total" },
+        ]),
     ]);
 
     const total = countResult[0]?.total ?? 0;
@@ -96,7 +116,7 @@ const allEvents = async (query: Record<string, any>) => {
             totalPage: Math.ceil(total / limit),
         },
     };
-}
+};
 
 const addEvent = async (payload: IEvent) => {
     const event = await Event.create(payload);
