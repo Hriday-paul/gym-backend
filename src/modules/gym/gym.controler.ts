@@ -207,7 +207,7 @@ const nearMeMats = catchAsync(async (req, res) => {
 
 const allGymsForApp = catchAsync(async (req, res) => {
 
-    const result = await gymService.allGymsForApp(req.query, req.user?._id)
+    const result = await gymService.allGymsForApp(req.query)
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,

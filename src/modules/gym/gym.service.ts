@@ -172,14 +172,17 @@ const MyGyms = async (userId: string) => {
     return res;
 }
 
-const GymDetails = async (gymId: string, userId: string) => {
+const GymDetails = async (gymId: string, userId?: string) => {
 
     const details: IGym[] = await GYM.aggregate([
         { $match: { _id: new ObjectId(gymId) } },
-        {
+        ...(userId ? [{
             $lookup: {
                 from: "favourites",
-                let: { gymId: "$_id", userId: new ObjectId(userId) },
+                let: {
+                    gymId: "$_id",
+                    userId: new ObjectId(userId)
+                },
                 pipeline: [
                     {
                         $match: {
@@ -201,7 +204,13 @@ const GymDetails = async (gymId: string, userId: string) => {
                 isSaved: { $gt: [{ $size: "$favouriteStatus" }, 0] }
             }
         },
-        { $unset: "favouriteStatus" },
+        { $unset: "favouriteStatus" }]
+            :
+            [{
+                $addFields: {
+                    isSaved: false
+                }
+            }])
     ]);
 
     if (!details[0]) {
@@ -375,7 +384,7 @@ const deleteGymImage = async (gymId: string, imageId: string) => {
     return res;
 }
 
-const nearMeMats = async (query: Record<string, any>, userId: string) => {
+const nearMeMats = async (query: Record<string, any>, userId?: string) => {
 
     const day = query.day;
     const hour = query.hour
@@ -417,10 +426,12 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
     const nextDayEndTime = endTime - MINUTES_IN_DAY;
 
     // // update location to user
-    await User.updateOne(
-        { _id: userId },
-        { location: { type: "Point", coordinates: [long, lat] } }
-    );
+    if (userId) {
+        await User.updateOne(
+            { _id: userId },
+            { location: { type: "Point", coordinates: [long, lat] } }
+        );
+    }
 
     const mats = await GYM.aggregate([
         {
@@ -506,7 +517,7 @@ const nearMeMats = async (query: Record<string, any>, userId: string) => {
     return mats;
 }
 
-const allGymsForApp = async (query: Record<string, any>, userId: string) => {
+const allGymsForApp = async (query: Record<string, any>) => {
     const distance = query?.distance;
     const disciplines = query?.disciplines ? query?.disciplines.split(",") : [];
     const search = query?.searchTerm || "";

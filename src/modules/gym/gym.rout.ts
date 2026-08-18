@@ -6,6 +6,7 @@ import { gymControler } from "./gym.controler";
 import { allMatsvalidator, deleteGymImageValidator, gymAddValidator, gymUpdateValidator, nearGymValidator } from "./gym.validator";
 import { image_Upload } from "../../utils/s3";
 import parseData from "../../middleware/parseData";
+import authOptional from "../../middleware/authOptional";
 
 const router = Router();
 
@@ -42,14 +43,13 @@ router.get("/my-gyms",
 router.get("/list",
     allMatsvalidator,
     req_validator(),
-    auth(USER_ROLE.user),
     gymControler.allGymsForApp
 )
 
 router.get("/mats/near-me",
     nearGymValidator,
     req_validator(),
-    auth(USER_ROLE.user),
+    authOptional(),
     gymControler.nearMeMats
 )
 
@@ -64,7 +64,7 @@ router.patch(
 );
 
 router.get("/:id",
-    auth(USER_ROLE.user),
+    authOptional(),
     gymControler.GymDetails
 )
 
