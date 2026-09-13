@@ -19,7 +19,7 @@ export interface IUser {
   password: string;
   image: string;
   isverified: boolean
-  role: "user" | "admin";
+  role: "user" | "admin" | "staff";
   verification: {
     otp: string | number;
     expiresAt: Date;

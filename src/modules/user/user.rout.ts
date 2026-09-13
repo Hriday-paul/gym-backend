@@ -3,22 +3,31 @@ import auth from "../../middleware/auth";
 import { USER_ROLE } from "./user.constants";
 import parseData from "../../middleware/parseData";
 import { userController } from "./user.controller";
-import { competitionAddValidator, statusUpdateValidator, updateprofileValidate, } from "./user.validator";
+import { statusUpdateValidator, updateprofileValidate, } from "./user.validator";
 import req_validator from "../../middleware/req_validation";
 import { image_Upload } from "../../utils/s3";
+import { createAccountValidator } from "../auth/auth.validator";
 
 const router = Router();
 
 
 router.get(
     '/',
-    auth(USER_ROLE.admin, USER_ROLE.user),
+    auth(USER_ROLE.admin, USER_ROLE.staff, USER_ROLE.user),
     userController.all_users,
+);
+
+router.post(
+    '/staff',
+    createAccountValidator,
+    req_validator(),
+    auth(USER_ROLE.admin),
+    userController.addNewStaff,
 );
 
 router.patch(
     '/update-my-profile',
-    auth(USER_ROLE.admin, USER_ROLE.user),
+    auth(USER_ROLE.admin, USER_ROLE.staff, USER_ROLE.user),
     image_Upload.single('image'),
     parseData(),
     updateprofileValidate,
@@ -30,13 +39,13 @@ router.patch(
     '/status/:id',
     statusUpdateValidator,
     req_validator(),
-    auth(USER_ROLE.admin),
+    auth(USER_ROLE.admin, USER_ROLE.staff),
     userController.update_user_status,
 );
 
 router.get(
     '/my-profile',
-    auth(USER_ROLE.admin, USER_ROLE.user),
+    auth(USER_ROLE.admin, USER_ROLE.staff, USER_ROLE.user),
     userController.getMyProfile,
 );
 router.get(
@@ -55,6 +64,11 @@ router.delete(
     '/delete-account',
     auth(USER_ROLE.user),
     userController.deletemyAccount,
+);
+router.delete(
+    '/delete-account/:id',
+    auth(USER_ROLE.admin),
+    userController.deletAccount,
 );
 
 export const userRoutes = router;

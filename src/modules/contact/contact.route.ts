@@ -19,7 +19,7 @@ router.post(
   '/reply/:id',
   replyContactValidator,
   req_validator(),
-  auth(USER_ROLE.admin),
+  auth(USER_ROLE.admin, USER_ROLE.staff),
   contactController.replyContact,
 );
 
@@ -30,7 +30,7 @@ router.post(
 // router.get('/:id', contactController.getcontactById);
 
 router.get('/',
-  auth(USER_ROLE.admin),
+  auth(USER_ROLE.admin, USER_ROLE.staff),
   contactController.getAllcontact);
 
 export const contactRoutes = router;

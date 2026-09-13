@@ -6,10 +6,10 @@ import { dashboardControler } from "./dashboard.controler";
 
 const router = Router();
 
-router.get('/userChart', auth(USER_ROLE.admin),  dashboardControler.userChart);
+router.get('/userChart', auth(USER_ROLE.admin, USER_ROLE.staff),  dashboardControler.userChart);
 
-router.get('/earningChart', auth(USER_ROLE.admin),  dashboardControler.earningChart);
+router.get('/earningChart', auth(USER_ROLE.admin, USER_ROLE.staff),  dashboardControler.earningChart);
 
-router.get('/stats', auth(USER_ROLE.admin), dashboardControler.countData);
+router.get('/stats', auth(USER_ROLE.admin, USER_ROLE.staff), dashboardControler.countData);
 
 export const dashboardRouts = router

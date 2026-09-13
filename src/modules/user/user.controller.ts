@@ -6,6 +6,19 @@ import sendResponse from "../../utils/sendResponse";
 import httpStatus from 'http-status'
 import { uploadToS3 } from "../../utils/s3";
 
+
+const addNewStaff = catchAsync(async (req: Request<{}, {}, IUser>, res: Response) => {
+
+    const result = await userService.addNewStaff(req.body);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'New staff added successfully!',
+        data: result,
+    });
+})
+
 //get all users
 const all_users = catchAsync(async (req: Request, res: Response) => {
     const query = req.query
@@ -106,6 +119,19 @@ const deletemyAccount = catchAsync(async (req, res) => {
     });
 })
 
+// delete
+const deletAccount = catchAsync(async (req, res) => {
+
+    const result = await userService.deletemyAccount(req.params.id);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Account has been deleted successfully.',
+        data: result,
+    });
+})
+
 
 export const userController = {
     updateProfile,
@@ -115,5 +141,7 @@ export const userController = {
     AddRecentCompetition,
     deletemyAccount,
     geUserDetails,
-    getUnfriends
+    getUnfriends,
+    addNewStaff,
+    deletAccount
 }

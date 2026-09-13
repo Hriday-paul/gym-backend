@@ -7,35 +7,35 @@ const router = Router();
 
 router.get(
   "/",
-  auth(USER_ROLE.user, USER_ROLE.admin),
+  auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.staff),
   notificationController.getAllNotification
 );
 
 router.put(
   "/make-read/:id",
-  auth(USER_ROLE.admin, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.staff, USER_ROLE.user),
   notificationController.makeRead
 );
 router.get(
   "/unread-count",
-  auth(USER_ROLE.admin, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.staff, USER_ROLE.user),
   notificationController.notificationUnReadCount
 );
 
 router.put(
   "/make-read-all",
-  auth(USER_ROLE.admin, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.staff, USER_ROLE.user),
   notificationController.makeReadAll
 );
 
 router.delete(
   "/all",
-  auth(USER_ROLE.user, USER_ROLE.admin),
+  auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.staff),
   notificationController.dltAllNotification
 );
 router.delete(
   "/:id",
-  auth(USER_ROLE.user, USER_ROLE.admin),
+  auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.staff),
   notificationController.deleteNotification
 );
 

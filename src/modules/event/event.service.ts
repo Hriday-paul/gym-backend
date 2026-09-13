@@ -161,7 +161,7 @@ const deleteEvent = async (eventId: string, userId: string, role: string) => {
         throw new AppError(httpStatus.NOT_FOUND, "Event does not exist.");
     }
 
-    if (exist.user.toString() !== userId && role !== USER_ROLE.admin) {
+    if (exist.user.toString() !== userId && role !== USER_ROLE.admin && role !== USER_ROLE.staff) {
         throw new AppError(httpStatus.BAD_REQUEST, "You are not the owner of this event.");
     }
 
@@ -188,7 +188,7 @@ const updateEvent = async (payload: IEvent, eventId: string, userId: string, rol
         throw new AppError(httpStatus.NOT_FOUND, "Event does not exist.");
     }
 
-    if (exist.user.toString() !== userId && role !== USER_ROLE.admin) {
+    if (exist.user.toString() !== userId && role !== USER_ROLE.admin && role !== USER_ROLE.staff) {
 
         throw new AppError(httpStatus.BAD_REQUEST, "You are not the owner of this event.");
 

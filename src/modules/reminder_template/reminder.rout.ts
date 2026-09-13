@@ -7,12 +7,12 @@ import req_validator from "../../middleware/req_validation";
 
 const router = Router();
 
-router.get("/", auth(USER_ROLE.admin), reminderTemplateControler.getReminderTemplate);
+router.get("/", auth(USER_ROLE.admin, USER_ROLE.staff), reminderTemplateControler.getReminderTemplate);
 
 router.patch("/",
     updateReminderTempValidator,
     req_validator(),
-    auth(USER_ROLE.admin),
+    auth(USER_ROLE.admin, USER_ROLE.staff),
     reminderTemplateControler.updateReminderTemplate);
 
 export const reminderTempRouts = router;

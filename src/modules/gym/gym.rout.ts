@@ -26,7 +26,7 @@ router.post(
 );
 router.post(
     '/admin',
-    auth(USER_ROLE.admin),
+    auth(USER_ROLE.admin, USER_ROLE.staff),
     image_Upload.array('images'),
     parseData(),
     gymAddValidator,
@@ -34,7 +34,7 @@ router.post(
     gymControler.AddGymByAdmin,
 );
 
-router.get("/", auth(USER_ROLE.admin), gymControler.allGyms);
+router.get("/", auth(USER_ROLE.admin, USER_ROLE.staff), gymControler.allGyms);
 
 router.get("/my-gyms",
     auth(USER_ROLE.user),
@@ -55,7 +55,7 @@ router.get("/mats/near-me",
 
 router.patch(
     '/:id',
-    auth(USER_ROLE.user, USER_ROLE.admin),
+    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.staff),
     image_Upload.array('images'),
     parseData(),
     gymUpdateValidator,
@@ -71,12 +71,12 @@ router.get("/:id",
 router.delete("/gym-image",
     deleteGymImageValidator,
     req_validator(),
-    auth(USER_ROLE.user, USER_ROLE.admin),
+    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.staff),
     gymControler.deleteGymImage
 )
 
 router.delete("/:id",
-    auth(USER_ROLE.user, USER_ROLE.admin),
+    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.staff),
     gymControler.DeleteGym
 )
 

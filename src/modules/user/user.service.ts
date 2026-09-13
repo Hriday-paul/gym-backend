@@ -5,7 +5,10 @@ import { ICompetitionResult, IUser } from "./user.interface";
 import { User } from "./user.models";
 import httpStatus from 'http-status'
 import { Competition } from "../competition/competition.model";
-
+import bcrypt from 'bcrypt'
+import fs from 'fs';
+import path from 'path';
+import { emailQueue } from "../../queues/email.queue";
 
 const updateProfile = async (payload: IUser, userId: string, image: string) => {
     const { contact, first_name, last_name, belt_rank, disciplines, email, favourite_quote, height, home_gym, weight, location } = payload
@@ -130,7 +133,6 @@ const getUnfriends = async (query: Record<string, any>, userId: string) => {
     return { data: result, meta }
 };
 
-
 const getUserById = async (id: string) => {
     const result = await User.findById(id, {
         password: 0, verification: 0, "isDeleted": 0,
@@ -188,6 +190,66 @@ const deletemyAccount = async (userId: string) => {
     return res;
 }
 
+const addNewStaff = async (payload: IUser) => {
+
+    const { first_name, last_name, email, password = '', contact = '' } = payload
+
+    //check if email already exist
+    const exist = await User.findOne({ email: email });
+
+    if (exist && exist?.isverified) {
+        throw new AppError(
+            httpStatus.BAD_REQUEST,
+            'Account already exist with this email address',
+        );
+    }
+
+    // creat encrypted password
+    const hashedPassword = await bcrypt.hash(password, 15);
+
+    const user = await User.findOneAndUpdate({ email }, {
+        first_name,
+        last_name,
+        email,
+        contact,
+        password: hashedPassword,
+        isverified: true,
+        role: "staff",
+        isDeleted: false
+    },
+        { upsert: true, new: true }).select("first_name last_name email contact");
+
+    const userDoc = (user as any).toObject();
+    delete userDoc.password;
+    delete userDoc.fcmToken;
+
+    //send an email to user with login details
+    const otpEmailPath = path.join(
+        process.cwd(),
+        'public',
+        'view',
+        'invitation_email.html'
+    );
+
+    await emailQueue.add(
+        "email",
+        {
+            to: user?.email,
+            subject: "Welcome to Jiu Jitsu App - Staff Account Created",
+            html: fs
+                .readFileSync(otpEmailPath, 'utf8')
+                .replace('{{name}}', user?.first_name)
+                .replace('{{email}}', user?.email)
+                .replace('{{password}}', password)
+                .replace('{{link}}', "https://admin.thejiujitsuapp.com/login")
+                .replace('{{link2}}', "https://admin.thejiujitsuapp.com/login")
+        },
+    );
+
+    return userDoc;
+
+}
+
 export const userService = {
     updateProfile,
     getUserById,
@@ -195,5 +257,6 @@ export const userService = {
     status_update_user,
     AddRecentCompetition,
     deletemyAccount,
-    getUnfriends
+    getUnfriends,
+    addNewStaff
 }

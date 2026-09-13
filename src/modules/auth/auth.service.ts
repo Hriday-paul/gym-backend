@@ -119,11 +119,13 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
 //admin login
 const adminLogin = async (payload: { email: string, password: string, fcmToken?: string }) => {
 
-    const user: IUser | null = await User.findOne({ email: payload?.email, role: "admin" });
+    const user: IUser | null = await User.findOne({ email: payload?.email, role: {
+        $in: ["admin", "staff"]
+    } });
 
     if (!user) {
         // If user not found, throw error
-        throw new AppError(httpStatus.NOT_FOUND, 'Admin does not exist');
+        throw new AppError(httpStatus.NOT_FOUND, 'Account does not exist');
     } else {
 
         if (!user?.isverified) {

@@ -13,7 +13,7 @@ const router = Router();
 router.get("/", allMatsvalidator, req_validator(), eventControler.allEvents);
 
 router.post("/",
-    auth(USER_ROLE.user, USER_ROLE.admin),
+    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.staff),
     image_Upload.single('image'),
     parseData(),
     newEventAddValidator,
@@ -21,14 +21,14 @@ router.post("/",
     eventControler.addEvent);
 
 router.patch("/:id",
-    auth(USER_ROLE.user, USER_ROLE.admin),
+    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.staff),
     image_Upload.single('image'),
     parseData(),
     updateEventValidator,
     req_validator(),
     eventControler.updateEvent);
 
-router.get("/my-events", auth(USER_ROLE.user, USER_ROLE.admin), eventControler.myEvents);
-router.delete("/:id", auth(USER_ROLE.user, USER_ROLE.admin), eventControler.deleteEvent);
+router.get("/my-events", auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.staff), eventControler.myEvents);
+router.delete("/:id", auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.staff), eventControler.deleteEvent);
 
 export const eventRouts = router;

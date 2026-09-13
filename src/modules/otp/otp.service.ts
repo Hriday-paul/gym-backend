@@ -2,7 +2,6 @@ import httpStatus from 'http-status';
 import AppError from '../../error/AppError';
 import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
 import moment from 'moment';
-import { sendEmail } from '../../utils/mailSender';
 import config from '../../config';
 import { User } from '../user/user.models';
 import fs from 'fs';

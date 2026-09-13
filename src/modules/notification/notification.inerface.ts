@@ -6,7 +6,7 @@ export interface INotification {
   sender: mongoId;
   receiver: mongoId;
   receiverEmail: string;
-  receiverRole: "user" | "admin";
+  receiverRole: "user" | "admin" | "staff";
   message: string;
   fcmToken?: string;
   type?: "text" | "accept" | "reject" | "cancelled" | "payment" | "product";

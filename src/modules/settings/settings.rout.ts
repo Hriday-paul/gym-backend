@@ -11,7 +11,7 @@ router.get('/:key', SettingsValidator, req_validator(), settingsControler.single
 
 router.patch(
     '/',
-    auth(USER_ROLE.admin),
+    auth(USER_ROLE.admin, USER_ROLE.staff),
     updateSettingsValidator,
     req_validator(),
     settingsControler.updateSettingItem,

@@ -261,7 +261,8 @@ const DeleteGym = async (
 
         if (
             exist.user.toString() !== userId &&
-            role !== USER_ROLE.admin
+            role !== USER_ROLE.admin &&
+            role !== USER_ROLE.staff
         ) {
             throw new AppError(
                 httpstatus.BAD_REQUEST,
@@ -681,38 +682,6 @@ const getNextMatDateTime = (
     // Return a JS Date object in UTC (BullMQ expects UTC for delays)
     return matDate.toDate();
 };
-
-// const getNextMatDateTime = (dayOrder: number, from: number, forceNextWeek = false) => {
-
-//     const getTodayDayOrder = (): number => {
-//         const jsDay = new Date().getDay(); // 0–6
-//         return jsDay + 1; // convert to 1–7
-//     };
-
-//     const now = new Date();
-
-//     const todayOrder = getTodayDayOrder();
-
-//     let diff = dayOrder - todayOrder;
-
-//     // move to next week if passed
-//     if (diff < 0) diff += 7;
-
-//     const matDate = new Date(now);
-//     matDate.setDate(now.getDate() + diff);
-
-//     const hour = Math.floor(from / 60);
-//     const minute = from % 60;
-
-//     matDate.setHours(hour, minute, 0, 0);
-
-//     // ✅ handle same-day past time
-//     if (matDate <= now || forceNextWeek) {
-//         matDate.setDate(matDate.getDate() + 7);
-//     }
-
-//     return matDate;
-// };
 
 export const gymService = {
     AddGymByAdmin,

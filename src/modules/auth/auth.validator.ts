@@ -1,7 +1,7 @@
-import { check } from 'express-validator';
+import { body, check } from 'express-validator';
 
 export const createAccountValidator = [
-    check('first_name')
+    body('first_name')
         .trim()
         .not()
         .isEmpty()
@@ -10,7 +10,7 @@ export const createAccountValidator = [
         .isLength({ min: 2 })
         .withMessage('First name must be at least 2 characters long.'),
 
-    check('email')
+    body('email')
         .trim()
         .not()
         .isEmpty()
@@ -19,13 +19,13 @@ export const createAccountValidator = [
         .normalizeEmail({ all_lowercase: true })
         .withMessage('Invalid email address.'),
 
-    check('contact')
+    body('contact')
         .optional()
         .trim()
         .isMobilePhone('any')
         .withMessage('Invalid contact number.'),
 
-    check('password')
+    body('password')
         .trim()
         .not()
         .isEmpty()
@@ -34,7 +34,7 @@ export const createAccountValidator = [
 ];
 
 export const loginAccountValidator = [
-    check('email')
+    body('email')
         .trim()
         .not()
         .isEmpty()
@@ -43,7 +43,7 @@ export const loginAccountValidator = [
         .normalizeEmail({ all_lowercase: true })
         .withMessage('Invalid email address.'),
 
-    check('password')
+    body('password')
         .trim()
         .not()
         .isEmpty()
@@ -52,7 +52,7 @@ export const loginAccountValidator = [
 ];
 
 export const social_loginAccountValidator = [
-    check('email')
+    body('email')
         .trim()
         .not()
         .isEmpty()
@@ -63,7 +63,7 @@ export const social_loginAccountValidator = [
 
     // check('image').trim().not().isEmpty().withMessage('image is required').isString(),
 
-    check('first_name')
+    body('first_name')
         .trim()
         .not()
         .isEmpty()
@@ -72,7 +72,7 @@ export const social_loginAccountValidator = [
 ];
 
 export const refreshTokenValidator = [
-    check('refreshToken')
+    body('refreshToken')
         .trim()
         .not()
         .isEmpty()
@@ -81,7 +81,7 @@ export const refreshTokenValidator = [
 ];
 
 export const forgotPasswordValidator = [
-    check('email')
+    body('email')
         .trim()
         .not()
         .isEmpty()
@@ -92,13 +92,13 @@ export const forgotPasswordValidator = [
 ];
 
 export const resetPasswordValidator = [
-    check('newPassword')
+    body('newPassword')
         .trim()
         .not()
         .isEmpty()
         .withMessage('New password is required.'),
 
-    check('confirmPassword')
+    body('confirmPassword')
         .trim()
         .not()
         .isEmpty()
@@ -106,21 +106,21 @@ export const resetPasswordValidator = [
 ];
 
 export const changePasswordValidator = [
-    check('oldPassword')
+    body('oldPassword')
         .trim()
         .not()
         .isEmpty()
         .withMessage('Current password is required.')
         .isString(),
 
-    check('newPassword')
+    body('newPassword')
         .trim()
         .not()
         .isEmpty()
         .withMessage('New password is required.')
         .isString(),
 
-    check('confirmPassword')
+    body('confirmPassword')
         .trim()
         .not()
         .isEmpty()

@@ -164,7 +164,7 @@ const updateGym = catchAsync(async (req, res) => {
     // check you are a owner
     const exist = await GYM.findById(req.params.id)
 
-    if (exist?.user.toString() !== req.user?._id && req.user?.role !== USER_ROLE.admin) {
+    if (exist?.user.toString() !== req.user?._id && req.user?.role !== USER_ROLE.admin && req.user?.role !== USER_ROLE.staff) {
         throw new AppError(httpStatus.BAD_REQUEST, "You are not allowed to process this gym.")
     }
 

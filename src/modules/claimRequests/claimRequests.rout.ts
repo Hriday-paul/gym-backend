@@ -23,19 +23,19 @@ router.post("/",
 
 
 router.get("/",
-    auth(USER_ROLE.admin),
+    auth(USER_ROLE.admin, USER_ROLE.staff),
     claimReqControler.allClaims);
 
 router.post("/approve/:id",
-    auth(USER_ROLE.admin),
+    auth(USER_ROLE.admin, USER_ROLE.staff),
     claimReqControler.ApproveClaimReq);
 
 router.post("/reject/:id",
-    auth(USER_ROLE.admin),
+    auth(USER_ROLE.admin, USER_ROLE.staff),
     claimReqControler.RejectClaimReq);
 
 router.get("/stats",
-    auth(USER_ROLE.admin),
+    auth(USER_ROLE.admin, USER_ROLE.staff),
     claimReqControler.claimStats);
 
 
