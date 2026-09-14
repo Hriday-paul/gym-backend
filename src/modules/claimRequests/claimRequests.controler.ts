@@ -13,42 +13,60 @@ export const AddclaimReq = catchAsync(async (req, res) => {
 
     const files = req.files as Record<string, Express.Multer.File[]> | undefined;
 
-    if (!files)
-        throw new AppError(httpStatus.BAD_REQUEST, "Verification files are missing from your request.");
+    if (!files) {
+        throw new AppError(
+            httpStatus.BAD_REQUEST,
+            "At least one verification file is required."
+        );
+    }
 
-    // required fields
-    const requiredDocs = ["utility_bill", "business_license", "tax_document"];
+    // Available verification documents
+    const allowedDocs = [
+        "utility_bill",
+        "business_license",
+        "tax_document",
+    ];
 
-    // collect missing fields
-    const missing = requiredDocs.filter((f) => !files[f]);
-    if (missing.length > 0)
-        throw new AppError(httpStatus.BAD_REQUEST, `Missing required files: ${missing.join(", ")}`);
+    // Check that at least ONE file was provided
+    const hasAtLeastOneFile = allowedDocs.some(
+        (field) => files[field]?.length > 0
+    );
 
+    if (!hasAtLeastOneFile) {
+        throw new AppError(
+            httpStatus.BAD_REQUEST,
+            "At least one verification file is required."
+        );
+    }
 
-    //check claim ailability
+    // Check claim availability
     await claimReqService.CheckclaimReq(req.body.gym, req.user._id);
 
-    // Upload all files in parallel
+    // Upload only the files that were actually provided
     const uploads = await Promise.all(
-        requiredDocs.map(async (field) => {
-            const file = files[field][0];
+        allowedDocs
+            .filter((field) => files[field]?.length > 0)
+            .map(async (field) => {
+                const file = files[field][0];
 
-            const ext =
-                file?.originalname
+                const ext = file?.originalname
                     ? path.extname(file.originalname)
                     : "";
 
-            const newFileName = `${Math.floor(100000 + Math.random() * 900000)}${Date.now()}${ext}`;
+                const newFileName = `${Math.floor(
+                    100000 + Math.random() * 900000
+                )}${Date.now()}${ext}`;
 
-            const uploaded = await uploadToS3({
-                file,
-                fileName: `images/files/${newFileName}`,
-            });
-            return { field, url: uploaded };
-        })
+                const uploaded = await uploadToS3({
+                    file,
+                    fileName: `images/files/${newFileName}`,
+                });
+
+                return { field, url: uploaded };
+            })
     );
 
-    // attach uploaded file URLs to body
+    // Attach uploaded file URLs to body
     uploads.forEach(({ field, url }) => {
         req.body[field] = url;
     });
@@ -63,9 +81,9 @@ export const AddclaimReq = catchAsync(async (req, res) => {
     await notificationQueue.add(
         notificationJobs.adminNotification,
         {
-            title : "Gym claim request",
-            message : "A user has requested to claim a gym. Please review the request.",
-            senderId : req.user?._id
+            title: "Gym claim request",
+            message: "A user has requested to claim a gym. Please review the request.",
+            senderId: req.user?._id
         },
         {
             removeOnComplete: true,
