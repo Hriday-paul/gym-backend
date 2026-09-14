@@ -15,8 +15,7 @@ const ClaimSchema: Schema<IClaimReq> = new Schema(
                     required: true,
                 },
                 url: { type: String, required: true },
-            },
-            required: true
+            }
         },
         utility_bill: {
             type: {
@@ -25,8 +24,7 @@ const ClaimSchema: Schema<IClaimReq> = new Schema(
                     required: true,
                 },
                 url: { type: String, required: true },
-            },
-            required: true
+            }
         },
         tax_document: {
             type: {
@@ -35,8 +33,7 @@ const ClaimSchema: Schema<IClaimReq> = new Schema(
                     required: true,
                 },
                 url: { type: String, required: true },
-            },
-            required: true
+            }
         },
     },
     { timestamps: true },
