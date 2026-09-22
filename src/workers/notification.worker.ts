@@ -1,11 +1,12 @@
 import { Worker } from "bullmq";
-import { sendNotification } from "../modules/notification/notification.utils";
+import { sendMultipleNotification, sendNotification } from "../modules/notification/notification.utils";
 import { sendAdminNotifications } from "../modules/notification/notification.send.admin";
 import { connectionInfo } from "../config/redis";
 import Notification from "../modules/notification/notification.model";
 
 export const notificationJobs = {
     singleNotification: "singleNotification",
+    multipleNotification: "multipleNotification",
     adminNotification: "adminNotification"
 }
 
@@ -32,6 +33,15 @@ export const notificationWorker = new Worker(
                 receiverRole: "user",
                 sender: senderId,
             });
+        }
+        else if (job.name == notificationJobs.multipleNotification) {
+            const { tokens, title, message, notifications } = job.data;
+
+            await sendMultipleNotification(
+                tokens,
+                notifications,
+                { title, message }
+            );
         }
     },
     { connection: connectionInfo }

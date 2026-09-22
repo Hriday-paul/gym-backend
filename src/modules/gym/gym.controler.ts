@@ -12,6 +12,13 @@ import path from "path"
 const AddGymByAdmin = catchAsync(async (req, res) => {
     const files = req.files as Express.Multer.File[];
 
+    if(!files || files?.length <= 0) {
+        throw new AppError(
+            httpStatus.BAD_REQUEST,
+            'Minimum 1 GYM image is required',
+        );
+    }
+
     if (files) {
         const imgsArray: { file: any; path: string; key?: string }[] = [];
 
@@ -28,7 +35,7 @@ const AddGymByAdmin = catchAsync(async (req, res) => {
         if (urls?.length <= 0) {
             throw new AppError(
                 httpStatus.BAD_REQUEST,
-                'Minimum 1 image is required',
+                'Minimum 1 GYM image is required',
             );
         }
     }
@@ -48,39 +55,67 @@ const AddGymByUser = catchAsync(async (req, res) => {
 
     const files = req.files as Record<string, Express.Multer.File[]> | undefined;
 
-    if (!files)
-        throw new AppError(httpStatus.BAD_REQUEST, "Files used for verification are missing from your request.");
+    if (!files) {
+        throw new AppError(
+            httpStatus.BAD_REQUEST,
+            "At least one verification file is required."
+        );
+    }
 
-    // required fields
-    const requiredDocs = ["utility_bill", "business_license", "tax_document"];
+    if (files?.images?.length <= 0) {
+        throw new AppError(
+            httpStatus.BAD_REQUEST,
+            'Minimum of 1 GYM image is required for verification.',
+        );
+    }
 
-    // collect missing fields
-    const missing = requiredDocs.filter((f) => !files[f]);
-    if (missing.length > 0) throw new AppError(httpStatus.BAD_REQUEST, `Missing files: ${missing.join(", ")}`);
+    // Available verification documents
+    const allowedDocs = [
+        "utility_bill",
+        "business_license",
+        "tax_document",
+    ];
 
-    // Upload all files in parallel
+    // Check that at least ONE file was provided
+    const hasAtLeastOneFile = allowedDocs.some(
+        (field) => files[field]?.length > 0
+    );
+
+    if (!hasAtLeastOneFile) {
+        throw new AppError(
+            httpStatus.BAD_REQUEST,
+            "At least one verification file is required."
+        );
+    }
+
+
+    // Upload only the files that were actually provided
     const uploads = await Promise.all(
-        requiredDocs.map(async (field) => {
-            const file = files[field][0];
-            const ext =
-                file?.originalname
+        allowedDocs
+            .filter((field) => files[field]?.length > 0)
+            .map(async (field) => {
+                const file = files[field][0];
+
+                const ext = file?.originalname
                     ? path.extname(file.originalname)
                     : "";
 
-            const newFileName = `${Math.floor(100000 + Math.random() * 900000)}${Date.now()}${ext}`;
+                const newFileName = `${Math.floor(
+                    100000 + Math.random() * 900000
+                )}${Date.now()}${ext}`;
 
-            const uploaded = await uploadToS3({
-                file,
-                fileName: `images/files/${newFileName}`,
-            });
+                const uploaded = await uploadToS3({
+                    file,
+                    fileName: `images/files/${newFileName}`,
+                });
 
-            return { field, url: uploaded };
-        })
+                return { field, url: uploaded };
+            })
     );
 
     const claimReqs: any = {};
 
-    // attach uploaded file URLs
+    // Attach uploaded file URLs to body
     uploads.forEach(({ field, url }) => {
         claimReqs[field] = url;
     });

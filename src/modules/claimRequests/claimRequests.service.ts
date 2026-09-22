@@ -8,6 +8,8 @@ import httpstatus from "http-status"
 import { IUser } from "../user/user.interface";
 import { notificationQueue } from "../../queues/notification.queue";
 import { notificationJobs } from "../../workers/notification.worker";
+import { IGym } from "../gym/gym.interface";
+import { gymService } from "../gym/gym.service";
 
 const AddclaimReq = async (payload: IClaimReq) => {
 
@@ -46,7 +48,8 @@ const ApproveClaimReq = async (claimId: string) => {
         session.startTransaction();
 
         //check is exist or not
-        const exist = await ClaimReq.findOne({ _id: claimId }).populate("user");
+        const exist = await ClaimReq.findOne({ _id: claimId }).populate<{ user: IUser }>("user")
+            .populate<{ gym: IGym }>("gym");
 
         if (!exist) {
             throw new AppError(httpstatus.NOT_FOUND, "Claim request not found.");
@@ -57,8 +60,7 @@ const ApproveClaimReq = async (claimId: string) => {
         }
 
         //owner transfer
-        await GYM.updateOne({ _id: exist?.gym }, { user: exist?.user, isClaimed: true, status: "approved" }, { session });
-
+        await GYM.updateOne({ _id: exist.gym._id }, { user: exist?.user?._id, isClaimed: true, status: "approved" }, { session });
 
         // update status
         await ClaimReq.updateOne({ _id: claimId }, { status: "approved" }, { session });
@@ -79,16 +81,15 @@ const ApproveClaimReq = async (claimId: string) => {
                 receiverId: user?._id,
                 receiverEmail: user?.email,
                 senderId: user._id
-            },
-            {
-                removeOnComplete: true,
-                attempts: 3,
-                backoff: {
-                    type: "exponential",
-                    delay: 2000, // 2s → 4s → 8s
-                },
             }
         );
+
+        // send notification nearest users about new gym
+        if (exist?.gym?.status === "pending") {
+            gymService.NewGymUploadNotification(exist?.gym).catch((err) => {
+                console.error("Failed to send new gym notification:", err);
+            });
+        }
 
         return null;
 
@@ -135,14 +136,6 @@ const RejectClaimReq = async (claimId: string) => {
             receiverId: user?._id,
             receiverEmail: user?.email,
             senderId: user._id
-        },
-        {
-            removeOnComplete: true,
-            attempts: 3,
-            backoff: {
-                type: "exponential",
-                delay: 2000, // 2s → 4s → 8s
-            },
         }
     );
 

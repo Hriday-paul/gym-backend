@@ -21,14 +21,6 @@ new Worker(
                 {
                     title: "Event Deletion Failed",
                     message: "Failed to delete the event. Please try deleting it manually.",
-                },
-                {
-                    removeOnComplete: true,
-                    attempts: 3,
-                    backoff: {
-                        type: "exponential",
-                        delay: 2000, // 2s → 4s → 8s
-                    },
                 }
             );
 

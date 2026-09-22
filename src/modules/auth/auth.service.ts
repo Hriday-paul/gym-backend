@@ -13,6 +13,7 @@ import moment from "moment"
 import { emailQueue } from "../../queues/email.queue"
 import { notificationQueue } from "../../queues/notification.queue"
 import { notificationJobs } from "../../workers/notification.worker"
+import { matReminderQueue } from "../../queues/matReminder.queue"
 
 const createUser = async (payload: IUser) => {
     const { first_name, last_name, email, password = '', contact = '' } = payload
@@ -109,6 +110,10 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
         60 * 60 * 24 * 30, // 30 days
     );
 
+    await matReminderQueue.obliterate({
+        force: true,
+    });
+
     return {
         user: userDoc,
         accessToken,
@@ -119,9 +124,11 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
 //admin login
 const adminLogin = async (payload: { email: string, password: string, fcmToken?: string }) => {
 
-    const user: IUser | null = await User.findOne({ email: payload?.email, role: {
-        $in: ["admin", "staff"]
-    } });
+    const user: IUser | null = await User.findOne({
+        email: payload?.email, role: {
+            $in: ["admin", "staff"]
+        }
+    });
 
     if (!user) {
         // If user not found, throw error
@@ -286,14 +293,6 @@ const changePassword = async (id: string, payload: { oldPassword: string, newPas
             receiverId: user._id,
             receiverEmail: user.email,
             senderId: user._id
-        },
-        {
-            removeOnComplete: true,
-            attempts: 3,
-            backoff: {
-                type: "exponential",
-                delay: 2000, // 2s → 4s → 8s
-            },
         }
     );
 

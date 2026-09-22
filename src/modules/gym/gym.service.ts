@@ -17,6 +17,8 @@ import { matReminderQueue } from "../../queues/matReminder.queue";
 import moment from "moment-timezone";
 import { notificationQueue } from "../../queues/notification.queue";
 import { notificationJobs } from "../../workers/notification.worker";
+import { IUser } from "../user/user.interface";
+import { INotification } from "../notification/notification.inerface";
 
 const DayOrder = {
     Sunday: 1,
@@ -47,7 +49,6 @@ const NextDay: Record<Day, Day> = {
     Saturday: "Sunday",
 }
 
-
 export const muniteNumber_to_time = (minute: number) => {
     const hour = Math.floor(minute / 60);
     const min = minute % 60;
@@ -74,21 +75,18 @@ const AddGymByAdmin = async (payload: IGym, userId: string) => {
     // schedule mat reminder
     await scheduleMatReminderForGym(gym);
 
+    //send notification to near users for the new gym, don't wait for it to finish, just fire and forget
+    NewGymUploadNotification(gym).catch((err) => {
+        console.error("Failed to send new gym notification:", err);
+    });
+
     //send notification to admin
     await notificationQueue.add(
         notificationJobs.adminNotification,
         {
-            title: "Gym Added by Admin",
+            title: "New Gym Available in the System",
             message: "A new gym has been added by an administrator and is now available in the system.",
             senderId: userId
-        },
-        {
-            removeOnComplete: true,
-            attempts: 3,
-            backoff: {
-                type: "exponential",
-                delay: 2000, // 2s → 4s → 8s
-            },
         }
     );
 
@@ -117,7 +115,7 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimR
             return { day, dayOrder: DayOrder[day], from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
         })
 
-        const gym = await GYM.create([{ ...payload, isClaimed: true, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat }], { session });
+        const gym = await GYM.create([{ ...payload, isClaimed: true, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat, status : "pending" }], { session });
 
         const claimRequest = await ClaimReq.create(
             [{
@@ -143,14 +141,6 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimR
                 receiverId: user?._id,
                 receiverEmail: user?.email,
                 senderId: user?._id
-            },
-            {
-                removeOnComplete: true,
-                attempts: 3,
-                backoff: {
-                    type: "exponential",
-                    delay: 2000, // 2s → 4s → 8s
-                },
             }
         );
 
@@ -165,6 +155,63 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimR
     } finally {
         session.endSession();
     }
+}
+
+const NewGymUploadNotification = async (gym: IGym) => {
+
+    if (!gym || !gym?.location?.coordinates) return;
+
+    // finding users nearest this gym
+    const nearUsersAtGym: IUser[] = await User.aggregate([
+        {
+            $geoNear: {
+                near: {
+                    type: "Point",
+                    coordinates: gym?.location?.coordinates as [number, number],
+                },
+                distanceField: "distance",
+                maxDistance: 50 * 1609.34, // 50 mile
+                spherical: true,
+                distanceMultiplier: 0.000621371192, // for get mile
+            }
+        },
+        {
+            $match: {
+                isDeleted: false,
+                status: 1,
+
+            },
+        },
+    ]);
+
+    let fcmTokens: string[] = [];
+    let notifications: INotification[] = [];
+
+    for (let user of nearUsersAtGym) {
+        if (user?.fcmToken) {
+            fcmTokens.push(user?.fcmToken);
+        }
+        notifications.push({
+            title: `A New Gym “${gym?.name}” is now available near you!`,
+            message: `“${gym?.name}” is now available near you in the app. Explore the gym and discover upcoming sessions.`,
+            receiver: user?._id,
+            receiverEmail: user?.email,
+            receiverRole: user?.role,
+            sender: user?._id,
+        });
+    }
+
+    //send notification to near users
+    await notificationQueue.add(
+        notificationJobs.multipleNotification,
+        {
+            title: `A New Gym “${gym?.name}” is now available near you!`,
+            message: `“${gym?.name}” is now available near you in the app. Explore the gym and discover upcoming sessions.`,
+            tokens: fcmTokens,
+            notifications
+        }
+    );
+
 }
 
 const MyGyms = async (userId: string) => {
@@ -606,17 +653,30 @@ const allGyms = async (query: Record<string, any>) => {
 const scheduleMatReminderForGym = async (gym: IGym) => {
 
     // remove old queue for this gym
-    await matReminderQueue.remove(
-        `${gym?._id}`
+    const old_results = await Promise.allSettled(
+        gym?.mat_schedules.map((mat) =>
+            matReminderQueue.remove(`${gym._id}-${mat._id}`)
+        ) ?? []
     );
 
-    for (let mat of gym?.mat_schedules) {
-        await scheduleMatReminder(
-            gym?._id,
-            mat,
-            120 // generate reminder before 2 hour
-        );
-    }
+    old_results.forEach((r, i) => {
+        if (r.status === "rejected") {
+            console.warn(`Failed to remove old mat reminders...`, r.reason);
+        }
+    });
+
+    // schedule new queue for this gym
+    const results = await Promise.allSettled(
+        gym?.mat_schedules.map((mat) =>
+            scheduleMatReminder(gym._id, mat, 120)
+        )
+    );
+
+    results.forEach((r, i) => {
+        if (r.status === "rejected") {
+            console.warn(`Failed to schedule mat reminders...`, r.reason);
+        }
+    });
 }
 
 const scheduleMatReminder = async (
@@ -634,12 +694,14 @@ const scheduleMatReminder = async (
 
     if (delay <= 0) return;
 
+    const jobId = `${gymId}-${mat._id}`;
+
     await matReminderQueue.add(
         "mat-reminder",
         { gymId, matId: mat._id },
         {
             delay,
-            jobId: `${gymId}`,
+            jobId,
             removeOnComplete: true,
             attempts: 3,
             backoff: {
@@ -694,6 +756,8 @@ export const gymService = {
     allGymsForApp,
     GymDetails,
     allGyms,
+
+    NewGymUploadNotification,
 
     scheduleMatReminder
 }

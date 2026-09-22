@@ -60,14 +60,6 @@ const createContact = async (payload: Icontact, userId: string) => {
       title: "New Support Message",
       message: "A user has sent a new support message. Please review and respond.",
       senderId: userId
-    },
-    {
-      removeOnComplete: true,
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 2000, // 2s → 4s → 8s
-      },
     }
   );
 

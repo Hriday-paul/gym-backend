@@ -128,14 +128,6 @@ new Worker("mat-reminder", async job => {
                     {
                         title: "Gym Mat Reminder Generation Failed",
                         message: "Failed to generate the next day's gym mat reminder. Please update the gym details and try again.",
-                    },
-                    {
-                        removeOnComplete: true,
-                        attempts: 3,
-                        backoff: {
-                            type: "exponential",
-                            delay: 2000, // 2s → 4s → 8s
-                        },
                     }
                 );
 
@@ -173,14 +165,6 @@ new Worker("mat-reminder", async job => {
                 {
                     title: "Gym Mat Reminder Generation Failed",
                     message: "Failed to generate the next day's gym mat reminder. Please update the gym details and try again.",
-                },
-                {
-                    removeOnComplete: true,
-                    attempts: 3,
-                    backoff: {
-                        type: "exponential",
-                        delay: 2000, // 2s → 4s → 8s
-                    },
                 }
             );
 

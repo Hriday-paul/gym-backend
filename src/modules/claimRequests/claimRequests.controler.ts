@@ -84,14 +84,6 @@ export const AddclaimReq = catchAsync(async (req, res) => {
             title: "Gym claim request",
             message: "A user has requested to claim a gym. Please review the request.",
             senderId: req.user?._id
-        },
-        {
-            removeOnComplete: true,
-            attempts: 3,
-            backoff: {
-                type: "exponential",
-                delay: 2000, // 2s → 4s → 8s
-            },
         }
     );
 
