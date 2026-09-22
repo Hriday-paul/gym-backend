@@ -112,29 +112,6 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
         60 * 60 * 24 * 30, // 30 days
     );
 
-    await matReminderQueue.obliterate({
-        force: true,
-    });
-
-    const gyms = await GYM.find({ status: "approved" });
-
-    const results = await Promise.allSettled(
-        gyms.flatMap((gym) =>
-            gym.mat_schedules.map((mat) =>
-                gymService.scheduleMatReminder(gym._id, mat, 120)
-            )
-        )
-    );
-
-    results.forEach((r) => {
-        if (r.status === "rejected") {
-            console.warn(
-                `Failed to schedule mat reminder:`,
-                r.reason
-            );
-        }
-    });
-
     return {
         user: userDoc,
         accessToken,
