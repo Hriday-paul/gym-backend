@@ -14,6 +14,8 @@ import { emailQueue } from "../../queues/email.queue"
 import { notificationQueue } from "../../queues/notification.queue"
 import { notificationJobs } from "../../workers/notification.worker"
 import { matReminderQueue } from "../../queues/matReminder.queue"
+import { GYM } from "../gym/gym.model"
+import { gymService } from "../gym/gym.service"
 
 const createUser = async (payload: IUser) => {
     const { first_name, last_name, email, password = '', contact = '' } = payload
@@ -109,6 +111,29 @@ const loginUser = async (payload: { email: string, password: string, fcmToken?: 
         config.jwt_refresh_secret as string,
         60 * 60 * 24 * 30, // 30 days
     );
+
+    await matReminderQueue.obliterate({
+        force: true,
+    });
+
+    const gyms = await GYM.find({ status: "approved" });
+
+    const results = await Promise.allSettled(
+        gyms.flatMap((gym) =>
+            gym.mat_schedules.map((mat) =>
+                gymService.scheduleMatReminder(gym._id, mat, 120)
+            )
+        )
+    );
+
+    results.forEach((r) => {
+        if (r.status === "rejected") {
+            console.warn(
+                `Failed to schedule mat reminder:`,
+                r.reason
+            );
+        }
+    });
 
     return {
         user: userDoc,

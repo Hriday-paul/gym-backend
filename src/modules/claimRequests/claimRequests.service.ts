@@ -89,6 +89,9 @@ const ApproveClaimReq = async (claimId: string) => {
             gymService.NewGymUploadNotification(exist?.gym).catch((err) => {
                 console.error("Failed to send new gym notification:", err);
             });
+
+            // schedule mat reminder
+            await gymService.scheduleMatReminderForGym(exist?.gym);
         }
 
         return null;

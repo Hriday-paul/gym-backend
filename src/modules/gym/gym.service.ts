@@ -115,7 +115,7 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimR
             return { day, dayOrder: DayOrder[day], from: i?.from, from_view: muniteNumber_to_time(i?.from), to: i?.to, to_view: muniteNumber_to_time(i?.to), name: i?.name || null }
         })
 
-        const gym = await GYM.create([{ ...payload, isClaimed: true, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat, status : "pending" }], { session });
+        const gym = await GYM.create([{ ...payload, isClaimed: true, user: userId, mat_schedules: matschedulesFormat, class_schedules: classchedulesFormat, status: "pending" }], { session });
 
         const claimRequest = await ClaimReq.create(
             [{
@@ -143,9 +143,6 @@ const AddGymByUser = async (payload: IGym, userId: string, claimPayload: IClaimR
                 senderId: user?._id
             }
         );
-
-        // schedule mat reminder
-        await scheduleMatReminderForGym(gym[0]);
 
         return gym[0];
 
@@ -337,8 +334,18 @@ const DeleteGym = async (
 
         await session.commitTransaction();
 
-        // ✅ OUTSIDE transaction
-        await matReminderQueue.remove(`${gymId}`);
+        // remove old scheduled queue for this gym
+        const old_results = await Promise.allSettled(
+            exist?.mat_schedules.map((mat) =>
+                matReminderQueue.remove(`${exist._id}-${mat._id}`)
+            ) ?? []
+        );
+
+        old_results.forEach((r, i) => {
+            if (r.status === "rejected") {
+                console.warn(`Failed to remove old mat reminders...`, r.reason);
+            }
+        });
 
         return res;
 
@@ -759,5 +766,6 @@ export const gymService = {
 
     NewGymUploadNotification,
 
+    scheduleMatReminderForGym,
     scheduleMatReminder
 }
