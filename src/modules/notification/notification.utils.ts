@@ -134,7 +134,7 @@ export const sendMultipleNotification = async (
   });
 
 
-  console.log("-----------notification response---------------", response, "-----------------notification response------------------")
+  console.log("-----------notification response Start---------------", response, "-----------------notification response END------------------")
 
   // Log any individual token failures
   if (response?.failureCount > 0) {

@@ -73,7 +73,7 @@ new Worker("mat-reminder", async job => {
     let notifications: INotification[] = [];
 
     for (let user of nearUsersAtGym) {
-        if (user?.fcmToken && user?.fcmToken !== null) {
+        if (user?.fcmToken) {
             fcmTokens.push(user?.fcmToken);
         }
         notifications.push({
@@ -93,14 +93,6 @@ new Worker("mat-reminder", async job => {
         { title: formatMessage(msgTemplate?.title), message: formatMessage(msgTemplate?.message) }
     );
 
-    //schedule NEXT WEEK automatically
-    await gymService.scheduleMatReminder(
-        gymId,
-        mat,
-        120, // 2 hour,
-        true
-    );
-
 }, { connection: connectionInfo })
     .on("failed", async (job, err) => {
 
@@ -113,10 +105,15 @@ new Worker("mat-reminder", async job => {
 
             try {
                 const gym = await GYM.findById(gymId);
-                if (!gym || !gym?.location?.coordinates) return;
+                if (!gym || !gym?.location?.coordinates) {
+                    throw new Error("Gym not found or location coordinates missing");
+                };
                 const mat = gym.mat_schedules.find(mat => mat?._id?.toString() == matId);
 
-                if (!mat) return;
+                if (!mat) {
+                    throw new Error("Mat Does not exist for next schedule");
+                };
+
                 await gymService.scheduleMatReminder(
                     gymId,
                     mat,
@@ -145,6 +142,49 @@ new Worker("mat-reminder", async job => {
                 console.log("reminder generate failed for next week");
             }
 
+        }
+
+    }).on("completed", async (job) => {
+
+        const { gymId, matId } = job.data;
+
+        try {
+            const gym = await GYM.findById(gymId);
+            if (!gym || !gym?.location?.coordinates) {
+                throw new Error("Gym not found or location coordinates missing");
+            };
+            const mat = gym.mat_schedules.find(mat => mat?._id?.toString() == matId);
+
+            if (!mat) {
+                throw new Error("Mat Does not exist for next schedule");
+            };
+
+            await gymService.scheduleMatReminder(
+                gymId,
+                mat,
+                120, // 2 hour,
+                true
+            );
+
+        } catch (err: any) {
+
+            await notificationQueue.add(
+                notificationJobs.adminNotification,
+                {
+                    title: "Gym Mat Reminder Generation Failed",
+                    message: "Failed to generate the next day's gym mat reminder. Please update the gym details and try again.",
+                },
+                {
+                    removeOnComplete: true,
+                    attempts: 3,
+                    backoff: {
+                        type: "exponential",
+                        delay: 2000, // 2s → 4s → 8s
+                    },
+                }
+            );
+
+            console.log("reminder generate failed for next week ❌");
         }
 
     })
